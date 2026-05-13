@@ -1,29 +1,30 @@
-import { api } from '../../utils';
-import { API_ENDPOINTS } from '../../constants';
-import type { Customer } from '../../interfaces';
+import axiosInstance from '../../utils/axios';
+import { ENDPOINTS } from '../../constants/api';
+import type { ApiResponse, Customer } from '../../interfaces';
 
 export const customerService = {
-  getAll: async () => {
-    const response = await api.get<Customer[]>(API_ENDPOINTS.CUSTOMERS);
-    return response.data;
+  getAll: async (params?: any) => {
+    const response = await axiosInstance.get<ApiResponse<Customer[]>>(ENDPOINTS.CUSTOMERS.LIST, { params });
+    return response;
   },
   
   getById: async (id: string) => {
-    const response = await api.get<Customer>(`${API_ENDPOINTS.CUSTOMERS}/${id}`);
-    return response.data;
+    const response = await axiosInstance.get<ApiResponse<Customer>>(`${ENDPOINTS.CUSTOMERS.PROFILE}/${id}`);
+    return response;
   },
   
   create: async (data: Partial<Customer>) => {
-    const response = await api.post<Customer>(API_ENDPOINTS.CUSTOMERS, data);
-    return response.data;
+    const response = await axiosInstance.post<ApiResponse<Customer>>(ENDPOINTS.CUSTOMERS.PROFILE, data);
+    return response;
   },
   
   update: async (id: string, data: Partial<Customer>) => {
-    const response = await api.put<Customer>(`${API_ENDPOINTS.CUSTOMERS}/${id}`, data);
-    return response.data;
+    const response = await axiosInstance.put<ApiResponse<Customer>>(`${ENDPOINTS.CUSTOMERS.PROFILE}/${id}`, data);
+    return response;
   },
   
   delete: async (id: string) => {
-    await api.delete(`${API_ENDPOINTS.CUSTOMERS}/${id}`);
+    const response = await axiosInstance.delete<ApiResponse<any>>(`${ENDPOINTS.CUSTOMERS.PROFILE}/${id}`);
+    return response;
   },
 };

@@ -38,10 +38,10 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
           
           <div className="flex items-center space-x-3 bg-card border border-white/10 rounded-xl px-3 py-1.5 cursor-pointer hover:bg-slate-700 transition-colors">
             <div className="w-8 h-8 rounded-lg gold-gradient flex items-center justify-center text-background font-bold text-xs">
-              {user?.name.charAt(0) || 'A'}
+              {user?.fullName?.charAt(0) || 'A'}
             </div>
             <div className="hidden sm:block text-left">
-              <p className="text-sm font-semibold text-text-light leading-none">{user?.name || 'Admin User'}</p>
+              <p className="text-sm font-semibold text-text-light leading-none">{user?.fullName || 'Admin User'}</p>
               <p className="text-[10px] text-slate-500 mt-1 capitalize">{user?.role || 'Administrator'}</p>
             </div>
           </div>

@@ -21,13 +21,7 @@ import {
   Area 
 } from 'recharts';
 import { formatCurrency } from '../../helpers';
-
-const stats = [
-  { label: 'Total Customers', value: '2,845', icon: Users, change: '+12%', isPositive: true },
-  { label: 'Total Collections', value: '₹12,45,000', icon: TrendingUp, change: '+8.5%', isPositive: true },
-  { label: 'Pending Dues', value: '₹4,20,500', icon: AlertCircle, change: '+2.4%', isPositive: false },
-  { label: 'Active Schemes', value: '18', icon: CreditCard, change: '+2', isPositive: true },
-];
+import { useDashboardData } from '../../hooks/useDashboardData';
 
 const chartData = [
   { name: 'Jan', revenue: 4000, collections: 2400 },
@@ -49,6 +43,19 @@ const areaData = [
 ];
 
 export const DashboardScreen: React.FC = () => {
+  const { stats, isLoading } = useDashboardData();
+
+  const displayStats = [
+    { label: 'Total Customers', value: stats?.totalCustomers || '0', icon: Users, change: '+0%', isPositive: true },
+    { label: 'Total Collections', value: formatCurrency(stats?.monthlyCollection || 0), icon: TrendingUp, change: '+0%', isPositive: true },
+    { label: 'Active Schemes', value: stats?.totalSchemes || '0', icon: CreditCard, change: '+0', isPositive: true },
+    { label: 'Active Users', value: stats?.activeUsers || '0', icon: AlertCircle, change: '+0%', isPositive: true },
+  ];
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center h-64 text-text-light">Loading Dashboard...</div>;
+  }
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -64,7 +71,7 @@ export const DashboardScreen: React.FC = () => {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, idx) => (
+        {displayStats.map((stat, idx) => (
           <Card key={idx} className="relative overflow-hidden group hover:border-primary/30 transition-colors">
             <div className="flex items-center justify-between">
               <div className="p-3 bg-primary/10 rounded-xl text-primary">
