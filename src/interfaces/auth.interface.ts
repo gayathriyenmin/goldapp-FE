@@ -1,8 +1,9 @@
 export interface User {
-  id: string;
-  name: string;
+  id: string | number;
+  fullName: string;
+  name?: string;
   email: string;
-  role: 'admin' | 'staff';
+  role: string;
 }
 
 export interface AuthState {

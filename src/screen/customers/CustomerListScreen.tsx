@@ -12,18 +12,12 @@ import { Search, UserPlus, Eye, Edit, Trash2 } from 'lucide-react';
 import { Card, Button } from '../../components/common';
 import type { Customer } from '../../interfaces';
 import { formatCurrency, formatDate } from '../../helpers';
-
-const mockCustomers: Customer[] = [
-  { id: '1', name: 'Rajesh Kumar', email: 'rajesh@example.com', phone: '+91 9876543210', address: 'Mumbai, India', joinDate: '2023-01-15', status: 'active', totalPaid: 50000, dueAmount: 5000, schemes: ['1'] },
-  { id: '2', name: 'Sneha Patil', email: 'sneha@example.com', phone: '+91 9876543211', address: 'Pune, India', joinDate: '2023-02-20', status: 'active', totalPaid: 120000, dueAmount: 0, schemes: ['2'] },
-  { id: '3', name: 'Amit Sharma', email: 'amit@example.com', phone: '+91 9876543212', address: 'Delhi, India', joinDate: '2023-03-10', status: 'inactive', totalPaid: 20000, dueAmount: 10000, schemes: ['1'] },
-  { id: '4', name: 'Priya Singh', email: 'priya@example.com', phone: '+91 9876543213', address: 'Bangalore, India', joinDate: '2023-04-05', status: 'active', totalPaid: 75000, dueAmount: 2500, schemes: ['3'] },
-  { id: '5', name: 'Vikram Mehta', email: 'vikram@example.com', phone: '+91 9876543214', address: 'Ahmedabad, India', joinDate: '2023-05-12', status: 'active', totalPaid: 30000, dueAmount: 0, schemes: ['1'] },
-];
+import { useCustomers } from '../../hooks/useCustomers';
 
 const columnHelper = createColumnHelper<Customer>();
 
 export const CustomerListScreen: React.FC = () => {
+  const { customers, isLoading } = useCustomers();
   const [globalFilter, setGlobalFilter] = React.useState('');
 
   const columns = useMemo(() => [
@@ -32,7 +26,7 @@ export const CustomerListScreen: React.FC = () => {
       cell: info => (
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 rounded-full gold-gradient flex items-center justify-center text-background font-bold">
-            {info.getValue().charAt(0)}
+            {info.getValue()?.charAt(0) || 'C'}
           </div>
           <div>
             <div className="font-semibold text-text-light">{info.getValue()}</div>
@@ -84,7 +78,7 @@ export const CustomerListScreen: React.FC = () => {
   ], []);
 
   const table = useReactTable({
-    data: mockCustomers,
+    data: customers,
     columns,
     state: {
       globalFilter,
@@ -96,6 +90,10 @@ export const CustomerListScreen: React.FC = () => {
     getFilteredRowModel: getFilteredRowModel(),
   });
 
+  if (isLoading) {
+    return <div className="flex items-center justify-center h-64 text-text-light">Loading Customers...</div>;
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -103,10 +101,6 @@ export const CustomerListScreen: React.FC = () => {
           <h1 className="text-3xl font-bold text-text-light">Customers</h1>
           <p className="text-slate-400 mt-1">Manage and track your customer base</p>
         </div>
-        <Button className="flex items-center space-x-2">
-          <UserPlus size={20} />
-          <span>Add New Customer</span>
-        </Button>
       </div>
 
       <Card>
@@ -120,15 +114,6 @@ export const CustomerListScreen: React.FC = () => {
               placeholder="Search customers..."
               className="w-full bg-background border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:ring-primary focus:border-primary focus:outline-none"
             />
-          </div>
-          <div className="flex items-center space-x-2 text-sm text-slate-400">
-            <span>Show</span>
-            <select className="bg-background border border-white/10 rounded-lg px-2 py-1 text-text-light focus:outline-none">
-              <option>10</option>
-              <option>25</option>
-              <option>50</option>
-            </select>
-            <span>entries</span>
           </div>
         </div>
 
@@ -161,7 +146,7 @@ export const CustomerListScreen: React.FC = () => {
 
         <div className="flex items-center justify-between mt-6">
           <div className="text-sm text-slate-500">
-            Showing {table.getRowModel().rows.length} of {mockCustomers.length} customers
+            Showing {table.getRowModel().rows.length} of {customers.length} customers
           </div>
           <div className="flex items-center space-x-2">
             <Button

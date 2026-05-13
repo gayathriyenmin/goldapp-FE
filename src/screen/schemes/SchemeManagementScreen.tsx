@@ -4,13 +4,15 @@ import { Card, Button } from '../../components/common';
 import type { Scheme } from '../../interfaces';
 import { formatCurrency } from '../../helpers';
 
-const mockSchemes: Scheme[] = [
-  { id: '1', name: 'Gold Monthly Saver', duration: 12, minAmount: 1000, maxAmount: 50000, description: 'Save monthly and get gold coins at maturity', status: 'active', createdAt: '2023-01-01' },
-  { id: '2', name: 'Elite Bullion Plan', duration: 24, minAmount: 50000, maxAmount: 500000, description: 'Premium plan for serious gold investors', status: 'active', createdAt: '2023-02-15' },
-  { id: '3', name: 'Starter Gold', duration: 6, minAmount: 500, maxAmount: 5000, description: 'Entry level plan for beginners', status: 'inactive', createdAt: '2023-03-20' },
-];
+import { useSchemes } from '../../hooks/useSchemes';
 
 export const SchemeManagementScreen: React.FC = () => {
+  const { schemes, isLoading } = useSchemes();
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center h-64 text-text-light">Loading Schemes...</div>;
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -25,7 +27,7 @@ export const SchemeManagementScreen: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {mockSchemes.map((scheme) => (
+        {schemes.map((scheme) => (
           <Card key={scheme.id} className="relative overflow-hidden group">
             <div className={`absolute top-0 right-0 w-32 h-32 -mr-8 -mt-8 rounded-full blur-3xl opacity-20 transition-all duration-500 group-hover:scale-150 ${
               scheme.status === 'active' ? 'bg-success' : 'bg-slate-500'

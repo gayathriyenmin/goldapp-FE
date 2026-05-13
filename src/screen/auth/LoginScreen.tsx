@@ -6,8 +6,10 @@ import { z } from 'zod';
 import { Coins, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { Button, Input, Card } from '../../components/common';
 import { useAuthStore } from '../../store';
+import { authService } from '../../store/services';
 import { ROUTES } from '../../constants';
 import { motion } from 'framer-motion';
+import toast from 'react-hot-toast';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -32,17 +34,16 @@ export const LoginScreen: React.FC = () => {
 
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      login({
-        id: '1',
-        name: 'Super Admin',
-        email: data.email,
-        role: 'admin',
-      }, 'mock-jwt-token');
-      setIsLoading(false);
+    try {
+      const response = await authService.login(data);
+      login(response.data.user, response.data.accessToken);
+      toast.success(response.message || 'Logged in successfully');
       navigate(ROUTES.DASHBOARD);
-    }, 1500);
+    } catch (error: any) {
+      toast.error(error.message || 'Login failed');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
