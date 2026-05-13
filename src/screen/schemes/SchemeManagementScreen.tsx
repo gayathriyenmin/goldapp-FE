@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, Edit2, Trash2, CheckCircle, XCircle, TrendingUp, Calendar, ShieldCheck } from 'lucide-react';
-import { Card, Button, Modal, Input } from '../../components/common';
+import { Card, Button, Modal, Input, Toggle } from '../../components/common';
 import type { Scheme } from '../../interfaces';
 import { formatCurrency } from '../../helpers';
 import { useSchemes } from '../../hooks/useSchemes';
@@ -128,15 +128,18 @@ export const SchemeManagementScreen: React.FC = () => {
               <div className="p-3 bg-primary/10 rounded-2xl text-primary">
                 <TrendingUp size={24} />
               </div>
-              <button 
-                onClick={() => handleToggleStatus(scheme.id, scheme.isActive)}
-                className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center space-x-1 transition-all hover:scale-105 ${
+              <div className="flex flex-col items-end space-y-2">
+                <Toggle 
+                  enabled={scheme.isActive} 
+                  onChange={() => handleToggleStatus(scheme.id, scheme.isActive)} 
+                />
+                <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center space-x-1 ${
                   scheme.isActive ? 'bg-success/10 text-success' : 'bg-slate-500/10 text-slate-500'
-                }`}
-              >
-                {scheme.isActive ? <CheckCircle size={12} /> : <XCircle size={12} />}
-                <span>{scheme.isActive ? 'Active' : 'Inactive'}</span>
-              </button>
+                }`}>
+                  {scheme.isActive ? <CheckCircle size={12} /> : <XCircle size={12} />}
+                  <span>{scheme.isActive ? 'Active' : 'Inactive'}</span>
+                </span>
+              </div>
             </div>
 
             <h3 className="text-xl font-bold text-text-light mb-2">{scheme.name}</h3>
