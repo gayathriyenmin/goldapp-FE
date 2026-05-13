@@ -17,4 +17,19 @@ export const schemeService = {
     const response = await axiosInstance.post<ApiResponse<any>>(ENDPOINTS.SCHEMES.CREATE, data);
     return response;
   },
+
+  update: async (id: string | number, data: any) => {
+    const response = await axiosInstance.patch<ApiResponse<any>>(ENDPOINTS.SCHEMES.UPDATE(id), data);
+    return response;
+  },
+
+  updateStatus: async (id: string | number, isActive: boolean) => {
+    const response = await axiosInstance.patch<ApiResponse<any>>(ENDPOINTS.SCHEMES.UPDATE_STATUS(id), { isActive });
+    return response;
+  },
+
+  delete: async (id: string | number) => {
+    const response = await axiosInstance.delete<ApiResponse<any>>(ENDPOINTS.SCHEMES.DELETE(id));
+    return response;
+  },
 };
