@@ -1,11 +1,11 @@
 export interface Scheme {
-  id: string;
+  id: string | number;
   name: string;
-  duration: number; // months
-  minAmount: number;
-  maxAmount: number;
-  interestRate?: number;
   description: string;
-  status: 'active' | 'inactive';
+  monthlyAmount: number;
+  durationMonths: number;
+  bonusAmount?: number;
+  maturityAmount?: number;
+  isActive: boolean;
   createdAt: string;
 }
