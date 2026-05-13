@@ -16,6 +16,9 @@ export const ENDPOINTS = {
   SCHEMES: {
     LIST: '/schemes',
     CREATE: '/admin/create-scheme',
+    UPDATE: (id: string | number) => `/admin/edit-scheme/${id}`,
+    UPDATE_STATUS: (id: string | number) => `/admin/update-scheme-status/${id}`,
+    DELETE: (id: string | number) => `/admin/delete-scheme/${id}`,
     DETAIL: (id: string | number) => `/schemes/${id}`,
   },
   PAYMENTS: {

@@ -25,26 +25,75 @@ export const SchemeManagementScreen: React.FC = () => {
   const { schemes, isLoading, refetch } = useSchemes();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingScheme, setEditingScheme] = useState<Scheme | null>(null);
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<SchemeFormValues>({
+  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<SchemeFormValues>({
     resolver: zodResolver(schemeSchema),
-    defaultValues: {
-      durationMonths: 12,
-    }
   });
+
+  const handleOpenModal = (scheme?: Scheme) => {
+    if (scheme) {
+      setEditingScheme(scheme);
+      setValue('name', scheme.name);
+      setValue('description', scheme.description);
+      setValue('monthlyAmount', scheme.monthlyAmount);
+      setValue('durationMonths', scheme.durationMonths);
+      setValue('bonusAmount', scheme.bonusAmount);
+      setValue('maturityAmount', scheme.maturityAmount);
+    } else {
+      setEditingScheme(null);
+      reset({
+        name: '',
+        description: '',
+        monthlyAmount: 0,
+        durationMonths: 12,
+        bonusAmount: 0,
+        maturityAmount: 0,
+      });
+    }
+    setIsModalOpen(true);
+  };
 
   const onSubmit = async (data: SchemeFormValues) => {
     setIsSubmitting(true);
     try {
-      const response = await schemeService.create(data);
-      toast.success(response.message || 'Scheme created successfully');
+      if (editingScheme) {
+        const response = await schemeService.update(editingScheme.id, data);
+        toast.success(response.message || 'Scheme updated successfully');
+      } else {
+        const response = await schemeService.create(data);
+        toast.success(response.message || 'Scheme created successfully');
+      }
       setIsModalOpen(false);
+      setEditingScheme(null);
       reset();
       refetch();
     } catch (error: any) {
-      toast.error(error.message || 'Failed to create scheme');
+      toast.error(error.message || 'Operation failed');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleToggleStatus = async (id: string | number, currentStatus: boolean) => {
+    try {
+      const response = await schemeService.updateStatus(id, !currentStatus);
+      toast.success(response.message || `Scheme ${!currentStatus ? 'activated' : 'deactivated'}`);
+      refetch();
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to update status');
+    }
+  };
+
+  const handleDelete = async (id: string | number) => {
+    if (window.confirm('Are you sure you want to permanently delete this scheme?')) {
+      try {
+        const response = await schemeService.delete(id);
+        toast.success(response.message || 'Scheme deleted');
+        refetch();
+      } catch (error: any) {
+        toast.error(error.message || 'Failed to delete scheme');
+      }
     }
   };
 
@@ -61,7 +110,7 @@ export const SchemeManagementScreen: React.FC = () => {
         </div>
         <Button 
           className="flex items-center space-x-2"
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => handleOpenModal()}
         >
           <Plus size={20} />
           <span>Create New Scheme</span>
@@ -72,19 +121,22 @@ export const SchemeManagementScreen: React.FC = () => {
         {schemes.map((scheme) => (
           <Card key={scheme.id} className="relative overflow-hidden group">
             <div className={`absolute top-0 right-0 w-32 h-32 -mr-8 -mt-8 rounded-full blur-3xl opacity-20 transition-all duration-500 group-hover:scale-150 ${
-              scheme.isActive !== false ? 'bg-success' : 'bg-slate-500'
+              scheme.isActive ? 'bg-success' : 'bg-slate-500'
             }`} />
             
             <div className="flex items-start justify-between mb-6">
               <div className="p-3 bg-primary/10 rounded-2xl text-primary">
                 <TrendingUp size={24} />
               </div>
-              <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center space-x-1 ${
-                scheme.isActive !== false ? 'bg-success/10 text-success' : 'bg-slate-500/10 text-slate-500'
-              }`}>
-                {scheme.isActive !== false ? <CheckCircle size={12} /> : <XCircle size={12} />}
-                <span>{scheme.isActive !== false ? 'Active' : 'Inactive'}</span>
-              </span>
+              <button 
+                onClick={() => handleToggleStatus(scheme.id, scheme.isActive)}
+                className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center space-x-1 transition-all hover:scale-105 ${
+                  scheme.isActive ? 'bg-success/10 text-success' : 'bg-slate-500/10 text-slate-500'
+                }`}
+              >
+                {scheme.isActive ? <CheckCircle size={12} /> : <XCircle size={12} />}
+                <span>{scheme.isActive ? 'Active' : 'Inactive'}</span>
+              </button>
             </div>
 
             <h3 className="text-xl font-bold text-text-light mb-2">{scheme.name}</h3>
@@ -110,11 +162,19 @@ export const SchemeManagementScreen: React.FC = () => {
             </div>
 
             <div className="flex items-center space-x-3">
-              <Button variant="outline" className="flex-1 py-2 text-sm">
+              <Button 
+                variant="outline" 
+                className="flex-1 py-2 text-sm"
+                onClick={() => handleOpenModal(scheme)}
+              >
                 <Edit2 size={16} className="mr-2" />
                 Edit
               </Button>
-              <Button variant="secondary" className="p-2 hover:text-danger">
+              <Button 
+                variant="secondary" 
+                className="p-2 hover:text-danger hover:bg-danger/10"
+                onClick={() => handleDelete(scheme.id)}
+              >
                 <Trash2 size={18} />
               </Button>
             </div>
@@ -122,8 +182,8 @@ export const SchemeManagementScreen: React.FC = () => {
         ))}
 
         <button 
-          onClick={() => setIsModalOpen(true)}
-          className="border-2 border-dashed border-white/10 rounded-2xl p-8 flex flex-col items-center justify-center text-slate-500 hover:border-primary hover:text-primary transition-all duration-300 group"
+          onClick={() => handleOpenModal()}
+          className="border-2 border-dashed border-white/10 rounded-2xl p-8 flex flex-col items-center justify-center text-slate-500 hover:border-primary hover:text-primary transition-all duration-300 group min-h-[350px]"
         >
           <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4 group-hover:bg-primary/10 transition-colors">
             <Plus size={32} />
@@ -135,7 +195,7 @@ export const SchemeManagementScreen: React.FC = () => {
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title="Create New Gold Scheme"
+        title={editingScheme ? "Edit Gold Scheme" : "Create New Gold Scheme"}
       >
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <Input
@@ -195,7 +255,7 @@ export const SchemeManagementScreen: React.FC = () => {
               type="submit" 
               isLoading={isSubmitting}
             >
-              Create Scheme
+              {editingScheme ? 'Update Scheme' : 'Create Scheme'}
             </Button>
           </div>
         </form>
