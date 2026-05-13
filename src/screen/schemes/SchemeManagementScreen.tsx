@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, Edit2, Trash2, CheckCircle, XCircle, TrendingUp, Calendar, ShieldCheck } from 'lucide-react';
-import { Card, Button, Modal, Input, Toggle } from '../../components/common';
+import { Card, Button, Modal, Input, Toggle, ConfirmModal } from '../../components/common';
 import type { Scheme } from '../../interfaces';
 import { formatCurrency } from '../../helpers';
 import { useSchemes } from '../../hooks/useSchemes';
@@ -24,8 +24,10 @@ type SchemeFormValues = z.infer<typeof schemeSchema>;
 export const SchemeManagementScreen: React.FC = () => {
   const { schemes, isLoading, refetch } = useSchemes();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingScheme, setEditingScheme] = useState<Scheme | null>(null);
+  const [schemeToDelete, setSchemeToDelete] = useState<string | number | null>(null);
 
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<SchemeFormValues>({
     resolver: zodResolver(schemeSchema),
@@ -35,11 +37,11 @@ export const SchemeManagementScreen: React.FC = () => {
     if (scheme) {
       setEditingScheme(scheme);
       setValue('name', scheme.name);
-      setValue('description', scheme.description);
+      setValue('description', scheme.description || '');
       setValue('monthlyAmount', scheme.monthlyAmount);
       setValue('durationMonths', scheme.durationMonths);
-      setValue('bonusAmount', scheme.bonusAmount);
-      setValue('maturityAmount', scheme.maturityAmount);
+      setValue('bonusAmount', scheme.bonusAmount || 0);
+      setValue('maturityAmount', scheme.maturityAmount || 0);
     } else {
       setEditingScheme(null);
       reset({
@@ -85,15 +87,24 @@ export const SchemeManagementScreen: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: string | number) => {
-    if (window.confirm('Are you sure you want to permanently delete this scheme?')) {
-      try {
-        const response = await schemeService.delete(id);
-        toast.success(response.message || 'Scheme deleted');
-        refetch();
-      } catch (error: any) {
-        toast.error(error.message || 'Failed to delete scheme');
-      }
+  const handleDeleteClick = (id: string | number) => {
+    setSchemeToDelete(id);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!schemeToDelete) return;
+    setIsSubmitting(true);
+    try {
+      const response = await schemeService.delete(schemeToDelete);
+      toast.success(response.message || 'Scheme deleted');
+      setIsDeleteModalOpen(false);
+      setSchemeToDelete(null);
+      refetch();
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to delete scheme');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -121,7 +132,7 @@ export const SchemeManagementScreen: React.FC = () => {
         {schemes.map((scheme) => (
           <Card key={scheme.id} className="relative overflow-hidden group">
             <div className={`absolute top-0 right-0 w-32 h-32 -mr-8 -mt-8 rounded-full blur-3xl opacity-20 transition-all duration-500 group-hover:scale-150 ${
-              scheme.isActive ? 'bg-success' : 'bg-slate-500'
+              Boolean(scheme.isActive) ? 'bg-success' : 'bg-slate-500'
             }`} />
             
             <div className="flex items-start justify-between mb-6">
@@ -130,14 +141,14 @@ export const SchemeManagementScreen: React.FC = () => {
               </div>
               <div className="flex flex-col items-end space-y-2">
                 <Toggle 
-                  enabled={scheme.isActive} 
-                  onChange={() => handleToggleStatus(scheme.id, scheme.isActive)} 
+                  enabled={Boolean(scheme.isActive)} 
+                  onChange={() => handleToggleStatus(scheme.id, Boolean(scheme.isActive))} 
                 />
                 <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center space-x-1 ${
-                  scheme.isActive ? 'bg-success/10 text-success' : 'bg-slate-500/10 text-slate-500'
+                  Boolean(scheme.isActive) ? 'bg-success/10 text-success' : 'bg-slate-500/10 text-slate-500'
                 }`}>
-                  {scheme.isActive ? <CheckCircle size={12} /> : <XCircle size={12} />}
-                  <span>{scheme.isActive ? 'Active' : 'Inactive'}</span>
+                  {Boolean(scheme.isActive) ? <CheckCircle size={12} /> : <XCircle size={12} />}
+                  <span>{Boolean(scheme.isActive) ? 'Active' : 'Inactive'}</span>
                 </span>
               </div>
             </div>
@@ -176,7 +187,7 @@ export const SchemeManagementScreen: React.FC = () => {
               <Button 
                 variant="secondary" 
                 className="p-2 hover:text-danger hover:bg-danger/10"
-                onClick={() => handleDelete(scheme.id)}
+                onClick={() => handleDeleteClick(scheme.id)}
               >
                 <Trash2 size={18} />
               </Button>
@@ -263,6 +274,16 @@ export const SchemeManagementScreen: React.FC = () => {
           </div>
         </form>
       </Modal>
+
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Scheme"
+        message="Are you sure you want to permanently delete this scheme? This action cannot be undone."
+        confirmText="Delete Permanently"
+        isLoading={isSubmitting}
+      />
     </div>
   );
 };
