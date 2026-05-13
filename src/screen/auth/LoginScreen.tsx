@@ -27,8 +27,8 @@ export const LoginScreen: React.FC = () => {
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: 'admin@goldsave.com',
-      password: 'password123',
+      email: 'admin@gmail.com',
+      password: 'admin123',
     }
   });
 

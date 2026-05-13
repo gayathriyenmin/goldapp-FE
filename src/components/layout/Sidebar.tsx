@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { ROUTES } from '../../constants';
 import { useAuthStore } from '../../store';
-
+import logo from '../../assets/logo_sg.png'
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
@@ -43,13 +43,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       <aside className={`
         fixed top-0 left-0 h-full w-64 bg-card border-r border-white/10 z-50 transition-transform duration-300
         lg:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-      `}>
+      // `}>
         <div className="flex flex-col h-full">
           {/* Logo Section */}
           <div className="p-6 flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 gold-gradient rounded-xl flex items-center justify-center">
-                <Coins className="text-background" size={24} />
+                {/* <Coins className="text-background" size={24} /> */}
+                <img src={logo} alt="Logo" className="w-10 h-10 rounded-xl" />
               </div>
               <span className="text-xl font-bold text-primary tracking-tight">GoldSave</span>
             </div>
