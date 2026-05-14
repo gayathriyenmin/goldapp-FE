@@ -1,13 +1,117 @@
-import React from 'react';
-import { Upload, Plus, Image as ImageIcon, Trash2, Edit, ExternalLink } from 'lucide-react';
-import { Card, Button } from '../../components/common';
+import React, { useState } from 'react';
+import { Upload, Plus, Image as ImageIcon, Trash2, Edit, ExternalLink, Filter, Search, Calendar, CheckCircle, XCircle } from 'lucide-react';
+import { Card, Button, Modal, Input, Toggle, ConfirmModal } from '../../components/common';
+import { usePromotions } from '../../hooks/usePromotions';
+import { PromotionType } from '../../interfaces/promotion.interface';
+import type { Promotion } from '../../interfaces/promotion.interface';
+import { bannerOfferService } from '../../store/services';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import toast from 'react-hot-toast';
+import { formatDate } from '../../helpers';
 
-const banners = [
-  { id: '1', title: 'Diwali Special Offer', image: 'https://images.unsplash.com/photo-1581447100595-3a813831483f?auto=format&fit=crop&q=80&w=600', status: 'active', expiry: '2023-11-15' },
-  { id: '2', title: 'New Year Bonus', image: 'https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&q=80&w=600', status: 'scheduled', expiry: '2024-01-05' },
-];
+const promotionSchema = z.object({
+  type: z.nativeEnum(PromotionType),
+  title: z.string().min(3, 'Title must be at least 3 characters'),
+  image: z.string().url('Must be a valid image URL'),
+  description: z.string().optional(),
+  expiryDate: z.string().optional(),
+});
+
+type PromotionFormValues = z.infer<typeof promotionSchema>;
 
 export const BannerOffersScreen: React.FC = () => {
+  const { promotions, isLoading, refetch, filters, updateFilters, updateLocal, removeLocal } = usePromotions();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingPromotion, setEditingPromotion] = useState<Promotion | null>(null);
+  const [promotionToDelete, setPromotionToDelete] = useState<number | null>(null);
+
+  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<PromotionFormValues>({
+    resolver: zodResolver(promotionSchema),
+    defaultValues: {
+      type: PromotionType.BANNER,
+      isActive: true,
+    }
+  } as any);
+
+  const handleOpenModal = (promotion?: Promotion) => {
+    if (promotion) {
+      setEditingPromotion(promotion);
+      setValue('type', promotion.type);
+      setValue('title', promotion.title);
+      setValue('image', promotion.image);
+      setValue('description', promotion.description || '');
+      setValue('expiryDate', promotion.expiryDate ? new Date(promotion.expiryDate).toISOString().slice(0, 16) : '');
+    } else {
+      setEditingPromotion(null);
+      reset({
+        type: PromotionType.BANNER,
+        title: '',
+        image: '',
+        description: '',
+        expiryDate: '',
+      });
+    }
+    setIsModalOpen(true);
+  };
+
+  const onSubmit = async (data: PromotionFormValues) => {
+    setIsSubmitting(true);
+    try {
+      if (editingPromotion) {
+        await bannerOfferService.update(editingPromotion.id, data);
+        toast.success('Promotion updated successfully');
+      } else {
+        await bannerOfferService.create(data);
+        toast.success('Promotion created successfully');
+      }
+      setIsModalOpen(false);
+      refetch();
+    } catch (error: any) {
+      toast.error(error.message || 'Operation failed');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleToggleStatus = async (id: number, currentStatus: boolean) => {
+    try {
+      updateLocal(id, { isActive: !currentStatus });
+      await bannerOfferService.updateStatus(id, !currentStatus);
+      toast.success(`Promotion ${!currentStatus ? 'activated' : 'deactivated'}`);
+    } catch (error: any) {
+      updateLocal(id, { isActive: currentStatus });
+      toast.error(error.message || 'Failed to update status');
+    }
+  };
+
+  const handleDeleteClick = (id: number) => {
+    setPromotionToDelete(id);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!promotionToDelete) return;
+    setIsSubmitting(true);
+    try {
+      await bannerOfferService.delete(promotionToDelete);
+      toast.success('Promotion deleted');
+      setIsDeleteModalOpen(false);
+      removeLocal(promotionToDelete);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to delete');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center h-64 text-text-light">Loading Banners...</div>;
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -15,44 +119,119 @@ export const BannerOffersScreen: React.FC = () => {
           <h1 className="text-3xl font-bold text-text-light">Banners & Promotions</h1>
           <p className="text-slate-400 mt-1">Manage marketing banners and customer offers</p>
         </div>
-        <Button className="flex items-center space-x-2">
-          <Upload size={20} />
-          <span>Upload New Banner</span>
+        <Button 
+          className="flex items-center space-x-2"
+          onClick={() => handleOpenModal()}
+        >
+          <Plus size={20} />
+          <span>Create New Promotion</span>
         </Button>
       </div>
 
+      <Card className="p-4 bg-card/50 backdrop-blur-md border-white/5">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex bg-white/5 rounded-xl p-1">
+            {[
+              { label: 'All', value: undefined },
+              { label: 'Banners', value: PromotionType.BANNER },
+              { label: 'Offers', value: PromotionType.OFFER }
+            ].map((option) => (
+              <button
+                key={option.label}
+                onClick={() => updateFilters({ type: option.value })}
+                className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  filters.type === option.value
+                    ? 'bg-primary text-background shadow-lg'
+                    : 'text-slate-400 hover:text-text-light'
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex bg-white/5 rounded-xl p-1">
+            {[
+              { label: 'All Status', value: undefined },
+              { label: 'Active', value: '1' },
+              { label: 'Inactive', value: '0' }
+            ].map((option) => (
+              <button
+                key={option.label}
+                onClick={() => updateFilters({ isActive: option.value })}
+                className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  filters.isActive === option.value
+                    ? 'bg-primary text-background shadow-lg'
+                    : 'text-slate-400 hover:text-text-light'
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </Card>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {banners.map((banner) => (
-          <Card key={banner.id} className="p-0 overflow-hidden">
-            <div className="relative h-48 overflow-hidden">
+        {promotions.map((promo) => (
+          <Card key={promo.id} className="p-0 overflow-hidden group">
+            <div className="relative h-56 overflow-hidden">
               <img 
-                src={banner.image} 
-                alt={banner.title} 
-                className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                src={promo.image} 
+                alt={promo.title} 
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
               />
-              <div className="absolute top-4 right-4">
-                <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                  banner.status === 'active' ? 'bg-success text-white' : 'bg-accent text-background'
+              <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent opacity-60" />
+              <div className="absolute top-4 right-4 flex flex-col items-end space-y-2">
+                <Toggle 
+                  enabled={Boolean(promo.isActive)} 
+                  onChange={() => handleToggleStatus(promo.id, Boolean(promo.isActive))} 
+                />
+                <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center space-x-1 ${
+                  Boolean(promo.isActive) ? 'bg-success text-white' : 'bg-slate-500 text-white'
                 }`}>
-                  {banner.status}
+                  {Boolean(promo.isActive) ? <CheckCircle size={10} /> : <XCircle size={10} />}
+                  <span>{Boolean(promo.isActive) ? 'Active' : 'Inactive'}</span>
+                </span>
+              </div>
+              <div className="absolute top-4 left-4">
+                <span className="px-3 py-1 rounded-lg bg-primary/20 backdrop-blur-md text-primary border border-primary/20 text-xs font-bold uppercase tracking-widest">
+                  {promo.type}
                 </span>
               </div>
             </div>
             <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-bold text-text-light">{banner.title}</h3>
-                <span className="text-xs text-slate-500">Expires: {banner.expiry}</span>
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h3 className="text-xl font-bold text-text-light mb-1">{promo.title}</h3>
+                  <p className="text-slate-400 text-sm line-clamp-1">{promo.description}</p>
+                </div>
+                {promo.expiryDate && (
+                  <div className="text-right">
+                    <div className="flex items-center text-slate-500 text-xs mb-1">
+                      <Calendar size={12} className="mr-1" />
+                      <span>Expires</span>
+                    </div>
+                    <span className="text-xs font-semibold text-text-light">
+                      {formatDate(promo.expiryDate)}
+                    </span>
+                  </div>
+                )}
               </div>
               <div className="flex items-center space-x-3">
-                <Button variant="outline" className="flex-1 text-sm py-2">
+                <Button 
+                  variant="outline" 
+                  className="flex-1 text-sm py-2"
+                  onClick={() => handleOpenModal(promo)}
+                >
                   <Edit size={16} className="mr-2" />
                   Edit Details
                 </Button>
-                <Button variant="outline" className="flex-1 text-sm py-2 border-white/10">
-                  <ExternalLink size={16} className="mr-2" />
-                  Preview
-                </Button>
-                <Button variant="secondary" className="p-2 text-danger hover:bg-danger/10">
+                <Button 
+                  variant="secondary" 
+                  className="p-2 text-danger hover:bg-danger/10"
+                  onClick={() => handleDeleteClick(promo.id)}
+                >
                   <Trash2 size={18} />
                 </Button>
               </div>
@@ -60,20 +239,97 @@ export const BannerOffersScreen: React.FC = () => {
           </Card>
         ))}
 
-        <div className="border-2 border-dashed border-white/10 rounded-2xl p-12 flex flex-col items-center justify-center text-slate-500 hover:border-primary hover:text-primary transition-all duration-300 group cursor-pointer bg-white/5">
+        <div 
+          onClick={() => handleOpenModal()}
+          className="border-2 border-dashed border-white/10 rounded-2xl p-12 flex flex-col items-center justify-center text-slate-500 hover:border-primary hover:text-primary transition-all duration-300 group cursor-pointer bg-white/5 min-h-[300px]"
+        >
           <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mb-6 group-hover:bg-primary/10 transition-colors">
-            <ImageIcon size={40} />
+            <Plus size={40} />
           </div>
           <h4 className="text-lg font-bold text-text-light mb-2">Create New Promotion</h4>
           <p className="text-center text-sm max-w-xs mb-6">
-            Upload images for app banners, social media posts, or customer notifications.
+            Upload images for app banners or special customer offers.
           </p>
-          <Button variant="outline" className="space-x-2">
-            <Plus size={18} />
-            <span>Select Image</span>
-          </Button>
         </div>
       </div>
+
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title={editingPromotion ? "Edit Promotion" : "Create New Promotion"}
+      >
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-400">Promotion Type</label>
+              <select 
+                {...register('type')}
+                className="w-full bg-white/5 border border-white/10 rounded-xl py-2 px-4 text-text-light focus:outline-none focus:ring-2 focus:ring-primary/50"
+              >
+                <option value={PromotionType.BANNER}>Banner</option>
+                <option value={PromotionType.OFFER}>Offer</option>
+              </select>
+            </div>
+            <Input
+              label="Expiry Date"
+              type="datetime-local"
+              {...register('expiryDate')}
+              error={errors.expiryDate?.message}
+            />
+          </div>
+          
+          <Input
+            label="Promotion Title"
+            placeholder="e.g. Diwali Mega Sale"
+            {...register('title')}
+            error={errors.title?.message}
+          />
+
+          <Input
+            label="Image URL"
+            placeholder="https://example.com/banner.jpg"
+            {...register('image')}
+            error={errors.image?.message}
+          />
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-400">Description</label>
+            <textarea
+              {...register('description')}
+              rows={3}
+              placeholder="Detailed description of the promotion..."
+              className="w-full bg-white/5 border border-white/10 rounded-xl py-2 px-4 text-text-light focus:outline-none focus:ring-2 focus:ring-primary/50"
+            />
+          </div>
+
+          <div className="flex justify-end space-x-3 mt-8">
+            <Button 
+              variant="outline" 
+              type="button" 
+              onClick={() => setIsModalOpen(false)}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="submit" 
+              isLoading={isSubmitting}
+            >
+              {editingPromotion ? 'Update Promotion' : 'Create Promotion'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Promotion"
+        message="Are you sure you want to delete this promotion? This will remove it from the mobile application."
+        confirmText="Yes, Delete"
+        isLoading={isSubmitting}
+      />
     </div>
   );
 };

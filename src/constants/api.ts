@@ -29,12 +29,11 @@ export const ENDPOINTS = {
     LIST: '/installments',
     DUE: '/installments/due',
   },
-  BANNERS: {
-    LIST: '/banners',
-    CREATE: '/banners',
-  },
-  OFFERS: {
-    LIST: '/offers',
-    CREATE: '/offers',
+  PROMOTIONS: {
+    LIST: '/admin/promotions',
+    CREATE: '/admin/promotions',
+    UPDATE: (id: string | number) => `/admin/promotions/${id}`,
+    UPDATE_STATUS: (id: string | number) => `/admin/promotions-status/${id}`,
+    DELETE: (id: string | number) => `/admin/promotions/${id}`,
   },
 };
