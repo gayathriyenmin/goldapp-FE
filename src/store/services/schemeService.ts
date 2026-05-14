@@ -3,8 +3,8 @@ import { ENDPOINTS } from '../../constants/api';
 import type { ApiResponse } from '../../interfaces';
 
 export const schemeService = {
-  getAll: async () => {
-    const response = await axiosInstance.get<ApiResponse<any[]>>(ENDPOINTS.SCHEMES.LIST);
+  getAll: async (params?: any) => {
+    const response = await axiosInstance.get<ApiResponse<any[]>>(ENDPOINTS.SCHEMES.LIST, { params });
     return response;
   },
 

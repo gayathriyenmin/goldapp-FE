@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Edit2, Trash2, CheckCircle, XCircle, TrendingUp, Calendar, ShieldCheck } from 'lucide-react';
+import { Plus, Edit2, Trash2, CheckCircle, XCircle, TrendingUp, Calendar, ShieldCheck, Filter, Search } from 'lucide-react';
 import { Card, Button, Modal, Input, Toggle, ConfirmModal } from '../../components/common';
 import type { Scheme } from '../../interfaces';
 import { formatCurrency } from '../../helpers';
@@ -22,7 +22,7 @@ const schemeSchema = z.object({
 type SchemeFormValues = z.infer<typeof schemeSchema>;
 
 export const SchemeManagementScreen: React.FC = () => {
-  const { schemes, isLoading, refetch } = useSchemes();
+  const { schemes, isLoading, refetch, filters, updateFilters, updateSchemeLocal } = useSchemes();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -79,10 +79,17 @@ export const SchemeManagementScreen: React.FC = () => {
 
   const handleToggleStatus = async (id: string | number, currentStatus: boolean) => {
     try {
-      const response = await schemeService.updateStatus(id, !currentStatus);
-      toast.success(response.message || `Scheme ${!currentStatus ? 'activated' : 'deactivated'}`);
-      refetch();
+      // Optimistic update: change status in UI immediately
+      updateSchemeLocal(id, { isActive: !currentStatus });
+      
+      await schemeService.updateStatus(id, !currentStatus);
+      toast.success(`Scheme ${!currentStatus ? 'activated' : 'deactivated'}`);
+      
+      // We don't refetch here to prevent the backend's "Active-only" default 
+      // from removing the card we just made inactive.
     } catch (error: any) {
+      // Revert on error
+      updateSchemeLocal(id, { isActive: currentStatus });
       toast.error(error.message || 'Failed to update status');
     }
   };
@@ -119,14 +126,56 @@ export const SchemeManagementScreen: React.FC = () => {
           <h1 className="text-3xl font-bold text-text-light">Scheme Management</h1>
           <p className="text-slate-400 mt-1">Configure and manage gold saving schemes</p>
         </div>
-        <Button 
-          className="flex items-center space-x-2"
-          onClick={() => handleOpenModal()}
-        >
-          <Plus size={20} />
-          <span>Create New Scheme</span>
-        </Button>
+        <div className="flex items-center space-x-3">
+          <Button 
+            className="flex items-center space-x-2"
+            onClick={() => handleOpenModal()}
+          >
+            <Plus size={20} />
+            <span>Create New Scheme</span>
+          </Button>
+        </div>
       </div>
+
+      {/* Filters Section */}
+      <Card className="p-4 bg-card/50 backdrop-blur-md border-white/5">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+            <input
+              type="text"
+              placeholder="Search schemes by name..."
+              className="w-full bg-white/5 border border-white/10 rounded-xl py-2 pl-10 pr-4 text-text-light focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+              onChange={(e) => updateFilters({ search: e.target.value })}
+            />
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            <div className="p-2 bg-white/5 rounded-lg text-slate-400">
+              <Filter size={18} />
+            </div>
+            <div className="flex bg-white/5 rounded-xl p-1">
+              {[
+                { label: 'All', value: undefined },
+                { label: 'Active', value: '1' },
+                { label: 'Inactive', value: '0' }
+              ].map((option) => (
+                <button
+                  key={option.label}
+                  onClick={() => updateFilters({ isActive: option.value })}
+                  className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                    filters.isActive === option.value
+                      ? 'bg-primary text-background shadow-lg'
+                      : 'text-slate-400 hover:text-text-light'
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {schemes.map((scheme) => (
