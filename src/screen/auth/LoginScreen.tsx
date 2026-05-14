@@ -10,6 +10,7 @@ import { authService } from '../../store/services';
 import { ROUTES } from '../../constants';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
+import logo from '../../assets/logo_sg.png'
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -58,8 +59,9 @@ export const LoginScreen: React.FC = () => {
         className="w-full max-w-md z-10"
       >
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 gold-gradient rounded-3xl shadow-[0_0_40px_rgba(212,175,55,0.3)] mb-6">
-            <Coins className="text-background" size={40} />
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl  mb-6">
+            {/* <Coins className="text-background" size={40} /> */}
+            <img src={logo} alt="Logo" className="w-20 h-20 rounded-xl" />
           </div>
           <h1 className="text-4xl font-extrabold text-text-light tracking-tight">
             Gold<span className="text-primary">Save</span>

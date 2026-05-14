@@ -3,23 +3,28 @@ import { ENDPOINTS } from '../../constants/api';
 import type { ApiResponse } from '../../interfaces';
 
 export const bannerOfferService = {
-  getBanners: async () => {
-    const response = await axiosInstance.get<ApiResponse<any[]>>(ENDPOINTS.BANNERS.LIST);
+  getAll: async (params?: any) => {
+    const response = await axiosInstance.get<ApiResponse<any[]>>(ENDPOINTS.PROMOTIONS.LIST, { params });
     return response;
   },
 
-  createBanner: async (data: any) => {
-    const response = await axiosInstance.post<ApiResponse<any>>(ENDPOINTS.BANNERS.CREATE, data);
+  create: async (data: any) => {
+    const response = await axiosInstance.post<ApiResponse<any>>(ENDPOINTS.PROMOTIONS.CREATE, data);
     return response;
   },
 
-  getOffers: async () => {
-    const response = await axiosInstance.get<ApiResponse<any[]>>(ENDPOINTS.OFFERS.LIST);
+  update: async (id: string | number, data: any) => {
+    const response = await axiosInstance.put<ApiResponse<any>>(ENDPOINTS.PROMOTIONS.UPDATE(id), data);
     return response;
   },
 
-  createOffer: async (data: any) => {
-    const response = await axiosInstance.post<ApiResponse<any>>(ENDPOINTS.OFFERS.CREATE, data);
+  updateStatus: async (id: string | number, isActive: boolean) => {
+    const response = await axiosInstance.put<ApiResponse<any>>(ENDPOINTS.PROMOTIONS.UPDATE_STATUS(id), { isActive });
+    return response;
+  },
+
+  delete: async (id: string | number) => {
+    const response = await axiosInstance.delete<ApiResponse<any>>(ENDPOINTS.PROMOTIONS.DELETE(id));
     return response;
   },
 };
