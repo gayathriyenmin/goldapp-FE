@@ -20,6 +20,26 @@
     font-family: var(--font-inter);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    color-scheme: dark;
+  }
+
+  select option {
+    background-color: var(--color-background);
+    color: var(--color-text-light);
+  }
+
+  input::-webkit-calendar-picker-indicator {
+    filter: brightness(0) invert(1) !important;
+    cursor: pointer;
+    border-radius: 4px;
+    padding: 2px;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+  }
+  
+  input::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+    background-color: rgba(255, 255, 255, 0.1) !important;
   }
 }
 

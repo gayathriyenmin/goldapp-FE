@@ -14,7 +14,7 @@ import { formatDate } from '../../helpers';
 const promotionSchema = z.object({
   type: z.nativeEnum(PromotionType),
   title: z.string().min(3, 'Title must be at least 3 characters'),
-  image: z.string().url('Must be a valid image URL'),
+  image: z.string().min(1, 'Image is required'),
   description: z.string().optional(),
   expiryDate: z.string().optional(),
 });
@@ -37,6 +37,21 @@ export const BannerOffersScreen: React.FC = () => {
     }
   } as any);
 
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setValue('image', base64String);
+        setImagePreview(base64String);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleOpenModal = (promotion?: Promotion) => {
     if (promotion) {
       setEditingPromotion(promotion);
@@ -45,6 +60,7 @@ export const BannerOffersScreen: React.FC = () => {
       setValue('image', promotion.image);
       setValue('description', promotion.description || '');
       setValue('expiryDate', promotion.expiryDate ? new Date(promotion.expiryDate).toISOString().slice(0, 16) : '');
+      setImagePreview(promotion.image);
     } else {
       setEditingPromotion(null);
       reset({
@@ -54,6 +70,7 @@ export const BannerOffersScreen: React.FC = () => {
         description: '',
         expiryDate: '',
       });
+      setImagePreview(null);
     }
     setIsModalOpen(true);
   };
@@ -264,7 +281,7 @@ export const BannerOffersScreen: React.FC = () => {
               <label className="text-sm font-medium text-slate-400">Promotion Type</label>
               <select 
                 {...register('type')}
-                className="w-full bg-white/5 border border-white/10 rounded-xl py-2 px-4 text-text-light focus:outline-none focus:ring-2 focus:ring-primary/50"
+                className="w-full bg-background border border-white/10 rounded-xl py-2 px-4 text-text-light focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-200"
               >
                 <option value={PromotionType.BANNER}>Banner</option>
                 <option value={PromotionType.OFFER}>Offer</option>
@@ -285,12 +302,44 @@ export const BannerOffersScreen: React.FC = () => {
             error={errors.title?.message}
           />
 
-          <Input
-            label="Image URL"
-            placeholder="https://example.com/banner.jpg"
-            {...register('image')}
-            error={errors.image?.message}
-          />
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-400">Promotion Image</label>
+            <div className="relative group">
+              <div className="w-full h-40 rounded-xl border-2 border-dashed border-white/10 flex flex-col items-center justify-center overflow-hidden bg-white/5 hover:border-primary/50 transition-colors">
+                {imagePreview ? (
+                  <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                ) : (
+                  <>
+                    <ImageIcon className="text-slate-500 mb-2" size={32} />
+                    <span className="text-xs text-slate-500">Click to upload image</span>
+                  </>
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="absolute inset-0 opacity-0 cursor-pointer"
+                />
+              </div>
+              {imagePreview && (
+                <div className="absolute top-2 right-2 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                   <button 
+                    type="button"
+                    onClick={() => {
+                      setImagePreview(null);
+                      setValue('image', '');
+                    }}
+                    className="p-1.5 bg-danger text-white rounded-lg shadow-lg hover:bg-danger-dark transition-colors"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              )}
+            </div>
+            {errors.image && (
+              <p className="text-xs text-danger mt-1">{errors.image.message as string}</p>
+            )}
+          </div>
 
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-400">Description</label>
