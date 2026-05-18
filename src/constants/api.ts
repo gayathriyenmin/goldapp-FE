@@ -22,7 +22,7 @@ export const ENDPOINTS = {
     DETAIL: (id: string | number) => `/schemes/${id}`,
   },
   PAYMENTS: {
-    LIST: '/payments',
+    LIST: '/admin/payment-history',
     CREATE: '/payments',
   },
   INSTALLMENTS: {

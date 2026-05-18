@@ -1,28 +1,25 @@
 import React from 'react';
 import { CheckCircle2, XCircle, Clock, Filter, Download } from 'lucide-react';
 import { Card, Button } from '../../components/common';
-import type { Payment } from '../../interfaces';
 import { formatCurrency, formatDateTime } from '../../helpers';
-
-const mockPayments: Payment[] = [
-  { id: 'TXN001', customerId: '1', customerName: 'Rajesh Kumar', schemeId: '1', schemeName: 'Gold Monthly Saver', amount: 5000, date: '2023-10-24T10:30:00Z', status: 'success', transactionId: 'PAY-123456789' },
-  { id: 'TXN002', customerId: '2', customerName: 'Sneha Patil', schemeId: '2', schemeName: 'Elite Bullion Plan', amount: 15000, date: '2023-10-23T14:45:00Z', status: 'success', transactionId: 'PAY-987654321' },
-  { id: 'TXN003', customerId: '3', customerName: 'Amit Sharma', schemeId: '1', schemeName: 'Gold Monthly Saver', amount: 2000, date: '2023-10-23T11:20:00Z', status: 'failed', transactionId: 'PAY-554433221' },
-  { id: 'TXN004', customerId: '4', customerName: 'Priya Singh', schemeId: '3', schemeName: 'Starter Gold', amount: 500, date: '2023-10-22T16:10:00Z', status: 'pending', transactionId: 'PAY-112233445' },
-  { id: 'TXN005', customerId: '5', customerName: 'Vikram Mehta', schemeId: '1', schemeName: 'Gold Monthly Saver', amount: 3000, date: '2023-10-21T09:00:00Z', status: 'success', transactionId: 'PAY-667788990' },
-];
-
+import { usePayments } from '../../hooks/usePayments';
 import { PremiumPageLoader } from '../../components/common/PremiumPageLoader';
 
 export const PaymentManagementScreen: React.FC = () => {
-  const [isLoading, setIsLoading] = React.useState(true);
+  const { payments, isLoading } = usePayments();
 
-  React.useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, []);
+  // Dynamic counts based on actual database data
+  const successfulCount = payments.filter((p: any) => 
+    p.status?.toLowerCase() === 'success' || p.paymentStatus?.toLowerCase() === 'success' || p.paymentStatus?.toLowerCase() === 'success'
+  ).length;
+
+  const failedCount = payments.filter((p: any) => 
+    p.status?.toLowerCase() === 'failed' || p.paymentStatus?.toLowerCase() === 'failed'
+  ).length;
+
+  const pendingCount = payments.filter((p: any) => 
+    p.status?.toLowerCase() === 'pending' || p.paymentStatus?.toLowerCase() === 'pending'
+  ).length;
 
   if (isLoading) {
     return <PremiumPageLoader isLoading={true} text="Synchronizing Transactions" />;
@@ -54,7 +51,7 @@ export const PaymentManagementScreen: React.FC = () => {
           </div>
           <div>
             <p className="text-slate-400 text-sm">Successful</p>
-            <h4 className="text-2xl font-bold text-text-light">1,284</h4>
+            <h4 className="text-2xl font-bold text-text-light">{successfulCount}</h4>
           </div>
         </Card>
         <Card className="flex items-center space-x-4">
@@ -63,7 +60,7 @@ export const PaymentManagementScreen: React.FC = () => {
           </div>
           <div>
             <p className="text-slate-400 text-sm">Failed</p>
-            <h4 className="text-2xl font-bold text-text-light">42</h4>
+            <h4 className="text-2xl font-bold text-text-light">{failedCount}</h4>
           </div>
         </Card>
         <Card className="flex items-center space-x-4">
@@ -72,51 +69,65 @@ export const PaymentManagementScreen: React.FC = () => {
           </div>
           <div>
             <p className="text-slate-400 text-sm">Pending</p>
-            <h4 className="text-2xl font-bold text-text-light">18</h4>
+            <h4 className="text-2xl font-bold text-text-light">{pendingCount}</h4>
           </div>
         </Card>
       </div>
 
       <Card>
         <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="border-b border-white/5">
-                <th className="pb-4 px-4 text-slate-400 font-medium text-sm">Transaction ID</th>
-                <th className="pb-4 px-4 text-slate-400 font-medium text-sm">Customer</th>
-                <th className="pb-4 px-4 text-slate-400 font-medium text-sm">Scheme</th>
-                <th className="pb-4 px-4 text-slate-400 font-medium text-sm">Amount</th>
-                <th className="pb-4 px-4 text-slate-400 font-medium text-sm">Date & Time</th>
-                <th className="pb-4 px-4 text-slate-400 font-medium text-sm">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-              {mockPayments.map((payment) => (
-                <tr key={payment.id} className="group hover:bg-white/5 transition-colors">
-                  <td className="py-4 px-4 font-mono text-sm text-primary">{payment.id}</td>
-                  <td className="py-4 px-4">
-                    <div className="font-semibold text-text-light">{payment.customerName}</div>
-                    <div className="text-[10px] text-slate-500">{payment.transactionId}</div>
-                  </td>
-                  <td className="py-4 px-4 text-slate-400 text-sm">{payment.schemeName}</td>
-                  <td className="py-4 px-4 font-bold text-text-light">{formatCurrency(payment.amount)}</td>
-                  <td className="py-4 px-4 text-slate-500 text-sm">{formatDateTime(payment.date)}</td>
-                  <td className="py-4 px-4">
-                    <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center w-fit space-x-1 ${
-                      payment.status === 'success' ? 'bg-success/10 text-success' : 
-                      payment.status === 'failed' ? 'bg-danger/10 text-danger' : 
-                      'bg-accent/10 text-accent'
-                    }`}>
-                      {payment.status === 'success' ? <CheckCircle2 size={12} /> : 
-                       payment.status === 'failed' ? <XCircle size={12} /> : 
-                       <Clock size={12} />}
-                      <span>{payment.status}</span>
-                    </span>
-                  </td>
+          {payments.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-slate-500">
+              <p className="text-lg font-semibold text-slate-300">No transactions found</p>
+              <p className="text-sm text-slate-500 mt-1">There are currently no gold payments in the system.</p>
+            </div>
+          ) : (
+            <table className="w-full text-left">
+              <thead>
+                <tr className="border-b border-white/5">
+                  <th className="pb-4 px-4 text-slate-400 font-medium text-sm">Transaction ID</th>
+                  <th className="pb-4 px-4 text-slate-400 font-medium text-sm">Customer</th>
+                  <th className="pb-4 px-4 text-slate-400 font-medium text-sm">Scheme</th>
+                  <th className="pb-4 px-4 text-slate-400 font-medium text-sm">Amount</th>
+                  <th className="pb-4 px-4 text-slate-400 font-medium text-sm">Date & Time</th>
+                  <th className="pb-4 px-4 text-slate-400 font-medium text-sm">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {payments.map((payment: any) => {
+                  const displayStatus = (payment.status || payment.paymentStatus || 'success').toLowerCase();
+                  return (
+                    <tr key={payment.id} className="group hover:bg-white/5 transition-colors">
+                      <td className="py-4 px-4 font-mono text-sm text-primary">
+                        {payment.transactionId || `PAY-${payment.id}`}
+                      </td>
+                      <td className="py-4 px-4">
+                        <div className="font-semibold text-text-light">{payment.customerName || 'N/A'}</div>
+                        <div className="text-[10px] text-slate-500">{payment.customer?.email || ''}</div>
+                      </td>
+                      <td className="py-4 px-4 text-slate-400 text-sm">{payment.schemeName || 'N/A'}</td>
+                      <td className="py-4 px-4 font-bold text-text-light">{formatCurrency(payment.amount)}</td>
+                      <td className="py-4 px-4 text-slate-500 text-sm">
+                        {formatDateTime(payment.paymentDate || payment.date)}
+                      </td>
+                      <td className="py-4 px-4">
+                        <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center w-fit space-x-1 ${
+                          displayStatus === 'success' ? 'bg-success/10 text-success' : 
+                          displayStatus === 'failed' ? 'bg-danger/10 text-danger' : 
+                          'bg-accent/10 text-accent'
+                        }`}>
+                          {displayStatus === 'success' ? <CheckCircle2 size={12} /> : 
+                           displayStatus === 'failed' ? <XCircle size={12} /> : 
+                           <Clock size={12} />}
+                          <span>{displayStatus}</span>
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
         </div>
       </Card>
     </div>
