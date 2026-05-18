@@ -10,7 +10,22 @@ const dueCustomers = [
   { id: '4', name: 'Sunita Gupta', amount: 8000, dueDate: '2023-10-20', daysOverdue: 5, status: 'overdue' },
 ];
 
+import { PremiumPageLoader } from '../../components/common/PremiumPageLoader';
+
 export const DueCustomersScreen: React.FC = () => {
+  const [isLoading, setIsLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (isLoading) {
+    return <PremiumPageLoader isLoading={true} text="Synchronizing Ledger Dues" />;
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">

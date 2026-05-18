@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Edit2, Trash2, CheckCircle, XCircle, TrendingUp, Calendar, ShieldCheck, Filter, Search } from 'lucide-react';
 import { Card, Button, Modal, Input, Toggle, ConfirmModal } from '../../components/common';
+import { PremiumPageLoader } from '../../components/common/PremiumPageLoader';
 import type { Scheme } from '../../interfaces';
 import { formatCurrency } from '../../helpers';
 import { useSchemes } from '../../hooks/useSchemes';
@@ -116,7 +117,7 @@ export const SchemeManagementScreen: React.FC = () => {
   };
 
   if (isLoading) {
-    return <div className="flex items-center justify-center h-64 text-text-light">Loading Schemes...</div>;
+    return <PremiumPageLoader isLoading={true} text="Synchronizing Schemes" />;
   }
 
   return (

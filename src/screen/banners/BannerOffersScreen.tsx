@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Upload, Plus, Image as ImageIcon, Trash2, Edit, ExternalLink, Filter, Search, Calendar, CheckCircle, XCircle } from 'lucide-react';
 import { Card, Button, Modal, Input, Toggle, ConfirmModal } from '../../components/common';
+import { PremiumPageLoader } from '../../components/common/PremiumPageLoader';
 import { usePromotions } from '../../hooks/usePromotions';
 import { PromotionType } from '../../interfaces/promotion.interface';
 import type { Promotion } from '../../interfaces/promotion.interface';
@@ -126,7 +127,7 @@ export const BannerOffersScreen: React.FC = () => {
   };
 
   if (isLoading) {
-    return <div className="flex items-center justify-center h-64 text-text-light">Loading Banners...</div>;
+    return <PremiumPageLoader isLoading={true} text="Synchronizing Promotions" />;
   }
 
   return (
