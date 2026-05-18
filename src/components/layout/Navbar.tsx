@@ -1,6 +1,6 @@
 import React from 'react';
-import { Menu, Bell, Search } from 'lucide-react';
-import { useAuthStore } from '../../store';
+import { Menu, Bell, Search, Sun, Moon } from 'lucide-react';
+import { useAuthStore, useThemeStore } from '../../store';
 
 interface NavbarProps {
   onMenuClick: () => void;
@@ -8,6 +8,7 @@ interface NavbarProps {
 
 export const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
   const user = useAuthStore(state => state.user);
+  const { theme, toggleTheme } = useThemeStore();
 
   return (
     <header className="sticky top-0 z-30 w-full bg-background/80 backdrop-blur-md border-b border-white/5 px-4 lg:px-8 py-4">
@@ -34,6 +35,15 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
           <button className="relative p-2 text-slate-400 hover:text-white transition-colors bg-card border border-white/10 rounded-xl">
             <Bell size={20} />
             <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full border-2 border-card" />
+          </button>
+          
+          {/* Day/Night Theme Toggle Icon Button */}
+          <button 
+            onClick={toggleTheme}
+            className="p-2 text-slate-400 hover:text-white transition-colors bg-card border border-white/10 rounded-xl shadow-sm"
+            title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
+          >
+            {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
           </button>
           
           <div className="flex items-center space-x-3 bg-card border border-white/10 rounded-xl px-3 py-1.5 cursor-pointer hover:bg-slate-700 transition-colors">
