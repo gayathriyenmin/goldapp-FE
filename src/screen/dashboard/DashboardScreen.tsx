@@ -32,6 +32,7 @@ import { ROUTES } from '../../constants';
 import { formatCurrency, formatDate } from '../../helpers';
 import { useDashboardData } from '../../hooks/useDashboardData';
 import { PremiumPageLoader } from '@/components/common/PremiumPageLoader';
+import { useThemeStore } from '../../store';
 
 const mockTimeframes = {
   Monthly: [
@@ -80,9 +81,18 @@ const schemeData = [
 
 
 const CustomTooltip = ({ active, payload, label, unit }: any) => {
+  const { theme } = useThemeStore();
+  const isLight = theme === 'light';
+
   if (active && payload && payload.length) {
     return (
-      <div className="bg-[#1E293B]/95 backdrop-blur-md border border-white/10 p-3.5 rounded-xl shadow-2xl">
+      <div 
+        className="backdrop-blur-md p-3.5 rounded-xl shadow-2xl transition-all duration-300"
+        style={{
+          backgroundColor: isLight ? 'rgba(255, 255, 255, 0.95)' : 'rgba(30, 41, 59, 0.95)',
+          border: `1px solid ${isLight ? 'rgba(15, 23, 42, 0.08)' : 'rgba(255, 255, 255, 0.1)'}`,
+        }}
+      >
         {label && <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-2">{label}</p>}
         <div className="space-y-2">
           {payload.map((entry: any, index: number) => (
@@ -91,7 +101,7 @@ const CustomTooltip = ({ active, payload, label, unit }: any) => {
                 className="w-2.5 h-2.5 rounded-full inline-block shadow-sm" 
                 style={{ backgroundColor: entry.color || entry.fill }} 
               />
-              <span className="text-slate-300 text-xs font-semibold capitalize">
+              <span className="text-slate-350 text-xs font-semibold capitalize">
                 {entry.name}: <span className="text-text-light font-bold ml-1">
                   {unit === 'rate' ? `₹${entry.value}/g` : unit === 'percent' ? `${entry.value}%` : formatCurrency(entry.value)}
                 </span>
@@ -107,9 +117,11 @@ const CustomTooltip = ({ active, payload, label, unit }: any) => {
 
 const CustomDot = (props: any) => {
   const { cx, cy } = props;
+  const { theme } = useThemeStore();
+  const isLight = theme === 'light';
   return (
     <g>
-      <circle cx={cx} cy={cy} r="6" fill="#1E293B" stroke="#D4AF37" strokeWidth={2.5} />
+      <circle cx={cx} cy={cy} r="6" fill={isLight ? '#FFFFFF' : '#1E293B'} stroke="#D4AF37" strokeWidth={2.5} />
       <circle cx={cx} cy={cy} r="2.5" fill="#FACC15" />
     </g>
   );
@@ -117,10 +129,12 @@ const CustomDot = (props: any) => {
 
 const CustomActiveDot = (props: any) => {
   const { cx, cy } = props;
+  const { theme } = useThemeStore();
+  const isLight = theme === 'light';
   return (
     <g>
       <circle cx={cx} cy={cy} r="12" fill="none" stroke="#FACC15" strokeWidth={1.5} className="animate-pulse" opacity={0.4} />
-      <circle cx={cx} cy={cy} r="7" fill="#FACC15" stroke="#1E293B" strokeWidth={2.5} />
+      <circle cx={cx} cy={cy} r="7" fill="#FACC15" stroke={isLight ? '#FFFFFF' : '#1E293B'} strokeWidth={2.5} />
     </g>
   );
 };
@@ -143,6 +157,12 @@ const avatarGradients = [
 
 export const DashboardScreen: React.FC = () => {
   const navigate = useNavigate();
+  const { theme } = useThemeStore();
+  const isLight = theme === 'light';
+  const axisColor = isLight ? '#475569' : '#94a3b8';
+  const gridColor = isLight ? 'rgba(15, 23, 42, 0.08)' : '#334155';
+  const tooltipCursorColor = isLight ? 'rgba(15, 23, 42, 0.03)' : 'rgba(255, 255, 255, 0.05)';
+
   const { stats, goldRate, recentTransactions, isLoading } = useDashboardData();
   const [timeframe, setTimeframe] = useState<'Today' | 'Weekly' | 'Monthly'>('Monthly');
 
@@ -268,11 +288,11 @@ export const DashboardScreen: React.FC = () => {
                     <stop offset="100%" stopColor="#CA8A04" stopOpacity={0.4} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} opacity={0.3} />
-                <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} />
-                <YAxis stroke="#94a3b8" fontSize={12} tickFormatter={(value) => `₹${value}`} />
+                <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} opacity={0.3} />
+                <XAxis dataKey="name" stroke={axisColor} fontSize={12} />
+                <YAxis stroke={axisColor} fontSize={12} tickFormatter={(value) => `₹${value}`} />
                 <Tooltip 
-                  cursor={{ fill: 'rgba(255, 255, 255, 0.05)', radius: 4 }}
+                  cursor={{ fill: tooltipCursorColor, radius: 4 }}
                   content={<CustomTooltip />}
                 />
                 <Bar dataKey="revenue" name="Revenue" fill="url(#revenueGradient)" radius={[4, 4, 0, 0]} />
@@ -292,8 +312,8 @@ export const DashboardScreen: React.FC = () => {
                     <stop offset="95%" stopColor="#D4AF37" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} opacity={0.3} />
-                <XAxis dataKey="month" stroke="#94a3b8" fontSize={12} />
+                <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} opacity={0.3} />
+                <XAxis dataKey="month" stroke={axisColor} fontSize={12} />
                 <Tooltip content={<CustomTooltip />} />
                 <Area type="monotone" name="Acquisition" dataKey="amount" stroke="#D4AF37" fillOpacity={1} fill="url(#colorAmount)" strokeWidth={3} />
               </AreaChart>
@@ -362,9 +382,9 @@ export const DashboardScreen: React.FC = () => {
           <div className="h-[290px] w-full mt-4">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={dynamicGoldRateData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} opacity={0.3} />
-                <XAxis dataKey="day" stroke="#94a3b8" fontSize={11} />
-                <YAxis stroke="#94a3b8" fontSize={11} domain={['dataMin - 50', 'dataMax + 50']} tickFormatter={(value) => `₹${value}`} />
+                <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} opacity={0.3} />
+                <XAxis dataKey="day" stroke={axisColor} fontSize={11} />
+                <YAxis stroke={axisColor} fontSize={11} domain={['dataMin - 50', 'dataMax + 50']} tickFormatter={(value) => `₹${value}`} />
                 <Tooltip content={<CustomTooltip unit="rate" />} />
                 <Line 
                   type="monotone" 
