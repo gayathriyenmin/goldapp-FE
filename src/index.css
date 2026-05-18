@@ -12,6 +12,7 @@
   --slate-600-dynamic: #475569;
   
   --menu-hover-dynamic: rgba(255, 255, 255, 0.05);
+  --secondary-hover-dynamic: #334155;
 }
 
 .light {
@@ -26,6 +27,7 @@
   --slate-600-dynamic: #94a3b8; /* slate-400 */
   
   --menu-hover-dynamic: rgba(212, 175, 55, 0.08); /* Warm premium gold overlay in Light Mode */
+  --secondary-hover-dynamic: #e2e8f0; /* slate-200 in Light Mode */
 }
 
 @theme {
@@ -38,6 +40,7 @@
   --color-danger: #EF4444;
   --color-text-light: var(--color-text-light);
   --color-menu-hover: var(--menu-hover-dynamic);
+  --color-secondary-hover: var(--secondary-hover-dynamic);
   
   --color-slate-300: var(--slate-300-dynamic);
   --color-slate-350: var(--slate-350-dynamic);
