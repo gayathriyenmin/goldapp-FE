@@ -1,14 +1,44 @@
 @import "tailwindcss";
 
+:root {
+  --color-background: #0F172A;
+  --color-card: #1E293B;
+  --color-text-light: #F8FAFC;
+  
+  --slate-300-dynamic: #cbd5e1;
+  --slate-350-dynamic: #cbd5e1;
+  --slate-400-dynamic: #94a3b8;
+  --slate-500-dynamic: #64748b;
+  --slate-600-dynamic: #475569;
+}
+
+.light {
+  --color-background: #F8FAFC;
+  --color-card: #FFFFFF;
+  --color-text-light: #0F172A;
+  
+  --slate-300-dynamic: #475569; /* slate-600 */
+  --slate-350-dynamic: #334155; /* slate-700 */
+  --slate-400-dynamic: #1E293B; /* slate-800 */
+  --slate-500-dynamic: #0F172A; /* slate-900 */
+  --slate-600-dynamic: #94a3b8; /* slate-400 */
+}
+
 @theme {
   --color-primary: #D4AF37;
   --color-primary-dark: #B8860B;
-  --color-background: #0F172A;
-  --color-card: #1E293B;
+  --color-background: var(--color-background);
+  --color-card: var(--color-card);
   --color-accent: #FACC15;
   --color-success: #22C55E;
   --color-danger: #EF4444;
-  --color-text-light: #F8FAFC;
+  --color-text-light: var(--color-text-light);
+  
+  --color-slate-300: var(--slate-300-dynamic);
+  --color-slate-350: var(--slate-350-dynamic);
+  --color-slate-400: var(--slate-400-dynamic);
+  --color-slate-500: var(--slate-500-dynamic);
+  --color-slate-600: var(--slate-600-dynamic);
   
   --font-inter: "Inter", sans-serif;
 }
@@ -21,6 +51,12 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     color-scheme: dark;
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+  }
+
+  /* Make theme transitions fluid and gorgeous */
+  *, *::before, *::after {
+    transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
   }
 
   select option {
@@ -56,3 +92,41 @@
     background: linear-gradient(to right, var(--color-primary-dark), var(--color-primary), var(--color-accent));
   }
 }
+
+/* Dynamic theme overrides for light mode */
+.light {
+  color-scheme: light;
+}
+
+.light [class*="border-white/"] {
+  border-color: rgba(15, 23, 42, 0.08) !important;
+}
+.light [class*="border-t-white/"] {
+  border-top-color: rgba(15, 23, 42, 0.08) !important;
+}
+.light [class*="border-b-white/"] {
+  border-bottom-color: rgba(15, 23, 42, 0.08) !important;
+}
+.light [class*="border-r-white/"] {
+  border-right-color: rgba(15, 23, 42, 0.08) !important;
+}
+.light [class*="border-l-white/"] {
+  border-left-color: rgba(15, 23, 42, 0.08) !important;
+}
+
+.light [class*="bg-white/"] {
+  background-color: rgba(15, 23, 42, 0.03) !important;
+}
+.light [class*="bg-slate-950/"] {
+  background-color: rgba(15, 23, 42, 0.05) !important;
+}
+
+.light select option {
+  background-color: #FFFFFF;
+  color: #0F172A;
+}
+
+.light input::-webkit-calendar-picker-indicator {
+  filter: none !important;
+}
+
