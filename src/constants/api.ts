@@ -36,4 +36,7 @@ export const ENDPOINTS = {
     UPDATE_STATUS: (id: string | number) => `/admin/promotions-status/${id}`,
     DELETE: (id: string | number) => `/admin/promotions/${id}`,
   },
+  GOLD_RATES: {
+    TODAY: '/gold-rates/today',
+  },
 };

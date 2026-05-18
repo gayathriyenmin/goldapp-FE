@@ -74,15 +74,7 @@ const schemeData = [
   { name: 'Elite Wealth', value: 10, color: '#B8860B' },
 ];
 
-const goldRateData = [
-  { day: '12 May', rate: 7120 },
-  { day: '13 May', rate: 7180 },
-  { day: '14 May', rate: 7150 },
-  { day: '15 May', rate: 7220 },
-  { day: '16 May', rate: 7280 },
-  { day: '17 May', rate: 7240 },
-  { day: '18 May', rate: 7310 },
-];
+
 
 const CustomTooltip = ({ active, payload, label, unit }: any) => {
   if (active && payload && payload.length) {
@@ -146,7 +138,7 @@ const avatarGradients = [
 ];
 
 export const DashboardScreen: React.FC = () => {
-  const { stats, isLoading } = useDashboardData();
+  const { stats, goldRate, isLoading } = useDashboardData();
   const [timeframe, setTimeframe] = useState<'Today' | 'Weekly' | 'Monthly'>('Monthly');
 
   const displayStats = [
@@ -154,6 +146,17 @@ export const DashboardScreen: React.FC = () => {
     { label: 'Total Collections', value: formatCurrency(stats?.monthlyCollection || 10000000), icon: TrendingUp, change: '+15%', isPositive: true, progress: 85 },
     { label: 'Active Schemes', value: stats?.totalSchemes || '0', icon: CreditCard, change: '+45', isPositive: true, progress: 64 },
     { label: 'Active Users', value: stats?.activeUsers || '0', icon: AlertCircle, change: '+5%', isPositive: true, progress: 90 },
+  ];
+
+  const currentGoldRate = goldRate?.gold_rate_per_gram || 7310;
+  const dynamicGoldRateData = [
+    { day: '12 May', rate: 7120 },
+    { day: '13 May', rate: 7180 },
+    { day: '14 May', rate: 7150 },
+    { day: '15 May', rate: 7220 },
+    { day: '16 May', rate: 7280 },
+    { day: '17 May', rate: 7240 },
+    { day: 'Today', rate: currentGoldRate },
   ];
 
   if (isLoading) {
@@ -218,7 +221,7 @@ export const DashboardScreen: React.FC = () => {
         <div>
           <h5 className="text-sm font-bold text-primary tracking-wide">AI-Powered Business Insights</h5>
           <p className="text-slate-300 text-xs mt-1 leading-relaxed">
-            Gold prices surged by <span className="text-success font-bold">+1.2% today</span> (reaching ₹7,310/g). This price increase has driven a <span className="text-primary font-bold">14% growth</span> in <strong>Gold Monthly</strong> plan subscriptions this week, as users lock in lower purchase rates.
+            22K Gold prices {goldRate?.isUp !== false ? 'surged' : 'dipped'} by <span className={goldRate?.isUp !== false ? "text-success font-bold" : "text-danger font-bold"}>{goldRate?.isUp !== false ? '+' : ''}{goldRate?.changePercentage ?? '1.2'}% today</span> (reaching ₹{goldRate?.gold_rate_per_gram ? goldRate.gold_rate_per_gram.toLocaleString('en-IN') : '7,310'}/g). This price movement has driven a <span className="text-primary font-bold">14% growth</span> in <strong>Gold Monthly</strong> plan subscriptions this week, as users lock in purchase rates.
           </p>
         </div>
       </div>
@@ -331,21 +334,29 @@ export const DashboardScreen: React.FC = () => {
           </div>
         </Card>
 
-        {/* Live Gold Rate Tracker (Thematic Area Chart) */}
+        {/* Live Gold Rate Tracker (Dynamic Thematic Line Chart) */}
         <Card 
           className="lg:col-span-2" 
           title="Gold Rate Tracker" 
-          subtitle="24K gold rate fluctuation (per gram) over past 7 days"
+          subtitle="22K gold rate fluctuation (per gram) over past 7 days"
           headerAction={
-            <div className="flex items-center space-x-2 bg-success/10 border border-success/20 rounded-xl px-3 py-1 text-success shadow-md shadow-success/5 shrink-0">
-              <span className="w-1.5 h-1.5 bg-success rounded-full animate-ping" />
-              <span className="text-[10px] font-extrabold tracking-wider">LIVE: ₹7,310/g (+1.2%)</span>
+            <div className={`flex items-center space-x-2 rounded-xl px-3 py-1 border shadow-md shrink-0 transition-all duration-350 ${
+              goldRate?.isUp !== false 
+                ? 'bg-success/10 border-success/20 text-success shadow-success/5' 
+                : 'bg-danger/10 border-danger/20 text-danger shadow-danger/5'
+            }`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${
+                goldRate?.isUp !== false ? 'bg-success animate-ping' : 'bg-danger animate-pulse'
+              }`} />
+              <span className="text-[10px] font-extrabold tracking-wider">
+                LIVE: ₹{goldRate?.gold_rate_per_gram ? goldRate.gold_rate_per_gram.toLocaleString('en-IN') : '7,310'}/g ({goldRate?.isUp !== false ? '+' : ''}{goldRate?.changePercentage ?? '1.2'}%)
+              </span>
             </div>
           }
         >
           <div className="h-[290px] w-full mt-4">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={goldRateData}>
+              <LineChart data={dynamicGoldRateData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} opacity={0.3} />
                 <XAxis dataKey="day" stroke="#94a3b8" fontSize={11} />
                 <YAxis stroke="#94a3b8" fontSize={11} domain={['dataMin - 50', 'dataMax + 50']} tickFormatter={(value) => `₹${value}`} />
