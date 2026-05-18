@@ -12,7 +12,22 @@ const mockPayments: Payment[] = [
   { id: 'TXN005', customerId: '5', customerName: 'Vikram Mehta', schemeId: '1', schemeName: 'Gold Monthly Saver', amount: 3000, date: '2023-10-21T09:00:00Z', status: 'success', transactionId: 'PAY-667788990' },
 ];
 
+import { PremiumPageLoader } from '../../components/common/PremiumPageLoader';
+
 export const PaymentManagementScreen: React.FC = () => {
+  const [isLoading, setIsLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (isLoading) {
+    return <PremiumPageLoader isLoading={true} text="Synchronizing Transactions" />;
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">

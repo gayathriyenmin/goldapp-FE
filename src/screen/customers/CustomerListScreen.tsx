@@ -10,6 +10,7 @@ import {
 } from '@tanstack/react-table';
 import { Search, UserPlus, Eye, Edit, Trash2 } from 'lucide-react';
 import { Card, Button } from '../../components/common';
+import { PremiumPageLoader } from '../../components/common/PremiumPageLoader';
 import type { Customer } from '../../interfaces';
 import { formatCurrency, formatDate } from '../../helpers';
 import { useCustomers } from '../../hooks/useCustomers';
@@ -91,7 +92,7 @@ export const CustomerListScreen: React.FC = () => {
   });
 
   if (isLoading) {
-    return <div className="flex items-center justify-center h-64 text-text-light">Loading Customers...</div>;
+    return <PremiumPageLoader isLoading={true} text="Synchronizing Customers" />;
   }
 
   return (

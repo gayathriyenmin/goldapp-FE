@@ -29,6 +29,7 @@ import {
 } from 'recharts';
 import { formatCurrency } from '../../helpers';
 import { useDashboardData } from '../../hooks/useDashboardData';
+import { PremiumPageLoader } from '@/components/common/PremiumPageLoader';
 
 const mockTimeframes = {
   Monthly: [
@@ -137,6 +138,7 @@ const avatarGradients = [
   'from-[#FBBF24] to-[#B45309]',
 ];
 
+
 export const DashboardScreen: React.FC = () => {
   const { stats, goldRate, isLoading } = useDashboardData();
   const [timeframe, setTimeframe] = useState<'Today' | 'Weekly' | 'Monthly'>('Monthly');
@@ -160,7 +162,7 @@ export const DashboardScreen: React.FC = () => {
   ];
 
   if (isLoading) {
-    return <div className="flex items-center justify-center h-64 text-text-light font-medium">Loading Dashboard...</div>;
+    return <PremiumPageLoader isLoading={true} text="Synchronizing Ledger" />;
   }
 
   return (
