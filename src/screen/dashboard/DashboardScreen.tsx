@@ -6,7 +6,9 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Calendar,
-  Users
+  Users,
+  Sparkles,
+  Coins
 } from 'lucide-react';
 import { Card } from '../../components/common';
 import { 
@@ -18,7 +20,12 @@ import {
   Tooltip, 
   ResponsiveContainer, 
   AreaChart, 
-  Area 
+  Area,
+  PieChart,
+  Pie,
+  Cell,
+  LineChart,
+  Line
 } from 'recharts';
 import { formatCurrency } from '../../helpers';
 import { useDashboardData } from '../../hooks/useDashboardData';
@@ -60,11 +67,28 @@ const areaData = [
   { month: 'Jun', amount: 4000 },
 ];
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+const schemeData = [
+  { name: 'Gold Monthly', value: 45, color: '#D4AF37' },
+  { name: 'Elite Gold', value: 30, color: '#FACC15' },
+  { name: 'Starter Plan', value: 15, color: '#E2C974' },
+  { name: 'Elite Wealth', value: 10, color: '#B8860B' },
+];
+
+const goldRateData = [
+  { day: '12 May', rate: 7120 },
+  { day: '13 May', rate: 7180 },
+  { day: '14 May', rate: 7150 },
+  { day: '15 May', rate: 7220 },
+  { day: '16 May', rate: 7280 },
+  { day: '17 May', rate: 7240 },
+  { day: '18 May', rate: 7310 },
+];
+
+const CustomTooltip = ({ active, payload, label, unit }: any) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-[#1E293B]/95 backdrop-blur-md border border-white/10 p-3.5 rounded-xl shadow-2xl">
-        <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-2">{label}</p>
+        {label && <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-2">{label}</p>}
         <div className="space-y-2">
           {payload.map((entry: any, index: number) => (
             <div key={index} className="flex items-center space-x-2.5">
@@ -73,7 +97,9 @@ const CustomTooltip = ({ active, payload, label }: any) => {
                 style={{ backgroundColor: entry.color || entry.fill }} 
               />
               <span className="text-slate-300 text-xs font-semibold capitalize">
-                {entry.name}: <span className="text-text-light font-bold ml-1">{formatCurrency(entry.value)}</span>
+                {entry.name}: <span className="text-text-light font-bold ml-1">
+                  {unit === 'rate' ? `₹${entry.value}/g` : unit === 'percent' ? `${entry.value}%` : formatCurrency(entry.value)}
+                </span>
               </span>
             </div>
           ))}
@@ -82,6 +108,26 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     );
   }
   return null;
+};
+
+const CustomDot = (props: any) => {
+  const { cx, cy } = props;
+  return (
+    <g>
+      <circle cx={cx} cy={cy} r="6" fill="#1E293B" stroke="#D4AF37" strokeWidth={2.5} />
+      <circle cx={cx} cy={cy} r="2.5" fill="#FACC15" />
+    </g>
+  );
+};
+
+const CustomActiveDot = (props: any) => {
+  const { cx, cy } = props;
+  return (
+    <g>
+      <circle cx={cx} cy={cy} r="12" fill="none" stroke="#FACC15" strokeWidth={1.5} className="animate-pulse" opacity={0.4} />
+      <circle cx={cx} cy={cy} r="7" fill="#FACC15" stroke="#1E293B" strokeWidth={2.5} />
+    </g>
+  );
 };
 
 const getInitials = (name: string) => {
@@ -164,7 +210,20 @@ export const DashboardScreen: React.FC = () => {
         ))}
       </div>
 
-      {/* Charts Section */}
+      {/* Quick Insights Banner */}
+      <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-primary/20 rounded-2xl p-4 flex items-start space-x-3.5 shadow-md shadow-primary/5">
+        <div className="p-2.5 bg-primary/10 text-primary rounded-xl shrink-0">
+          <Sparkles size={20} className="animate-pulse" />
+        </div>
+        <div>
+          <h5 className="text-sm font-bold text-primary tracking-wide">AI-Powered Business Insights</h5>
+          <p className="text-slate-300 text-xs mt-1 leading-relaxed">
+            Gold prices surged by <span className="text-success font-bold">+1.2% today</span> (reaching ₹7,310/g). This price increase has driven a <span className="text-primary font-bold">14% growth</span> in <strong>Gold Monthly</strong> plan subscriptions this week, as users lock in lower purchase rates.
+          </p>
+        </div>
+      </div>
+
+      {/* Charts Section Row 1 */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card 
           className="lg:col-span-2" 
@@ -230,6 +289,79 @@ export const DashboardScreen: React.FC = () => {
                 <Tooltip content={<CustomTooltip />} />
                 <Area type="monotone" name="Acquisition" dataKey="amount" stroke="#D4AF37" fillOpacity={1} fill="url(#colorAmount)" strokeWidth={3} />
               </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+      </div>
+
+      {/* Charts Section Row 2 - Impressive Client Analytics */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Scheme Distribution (Donut Chart) */}
+        <Card title="Scheme Distribution" subtitle="Active subscriptions by plan type">
+          <div className="h-[220px] w-full flex items-center justify-center mt-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={schemeData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={80}
+                  paddingAngle={5}
+                  dataKey="value"
+                >
+                  {schemeData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip content={<CustomTooltip unit="percent" />} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="flex flex-col justify-center space-y-2.5 mt-2">
+            {schemeData.map((item, idx) => (
+              <div key={idx} className="flex items-center justify-between border-b border-white/5 pb-1.5 last:border-0 last:pb-0">
+                <div className="flex items-center space-x-2">
+                  <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: item.color }} />
+                  <span className="text-xs font-semibold text-slate-350">{item.name}</span>
+                </div>
+                <span className="text-xs font-bold text-text-light">{item.value}%</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        {/* Live Gold Rate Tracker (Thematic Area Chart) */}
+        <Card 
+          className="lg:col-span-2" 
+          title="Gold Rate Tracker" 
+          subtitle="24K gold rate fluctuation (per gram) over past 7 days"
+          headerAction={
+            <div className="flex items-center space-x-2 bg-success/10 border border-success/20 rounded-xl px-3 py-1 text-success shadow-md shadow-success/5 shrink-0">
+              <span className="w-1.5 h-1.5 bg-success rounded-full animate-ping" />
+              <span className="text-[10px] font-extrabold tracking-wider">LIVE: ₹7,310/g (+1.2%)</span>
+            </div>
+          }
+        >
+          <div className="h-[290px] w-full mt-4">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={goldRateData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} opacity={0.3} />
+                <XAxis dataKey="day" stroke="#94a3b8" fontSize={11} />
+                <YAxis stroke="#94a3b8" fontSize={11} domain={['dataMin - 50', 'dataMax + 50']} tickFormatter={(value) => `₹${value}`} />
+                <Tooltip content={<CustomTooltip unit="rate" />} />
+                <Line 
+                  type="monotone" 
+                  name="Gold Rate" 
+                  dataKey="rate" 
+                  stroke="#D4AF37" 
+                  strokeWidth={3} 
+                  dot={<CustomDot />}
+                  activeDot={<CustomActiveDot />}
+                  isAnimationActive={true}
+                  animationDuration={1500}
+                />
+              </LineChart>
             </ResponsiveContainer>
           </div>
         </Card>
