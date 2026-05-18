@@ -7,4 +7,8 @@ export const dashboardService = {
     const response = await axiosInstance.get<ApiResponse<any>>(ENDPOINTS.DASHBOARD.STATS);
     return response;
   },
+  getTodayGoldRate: async () => {
+    const response = await axiosInstance.get<any>(ENDPOINTS.GOLD_RATES.TODAY);
+    return response;
+  },
 };
