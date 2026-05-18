@@ -27,7 +27,9 @@ import {
   LineChart,
   Line
 } from 'recharts';
-import { formatCurrency } from '../../helpers';
+import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '../../constants';
+import { formatCurrency, formatDate } from '../../helpers';
 import { useDashboardData } from '../../hooks/useDashboardData';
 import { PremiumPageLoader } from '@/components/common/PremiumPageLoader';
 
@@ -140,12 +142,13 @@ const avatarGradients = [
 
 
 export const DashboardScreen: React.FC = () => {
-  const { stats, goldRate, isLoading } = useDashboardData();
+  const navigate = useNavigate();
+  const { stats, goldRate, recentTransactions, isLoading } = useDashboardData();
   const [timeframe, setTimeframe] = useState<'Today' | 'Weekly' | 'Monthly'>('Monthly');
 
   const displayStats = [
     { label: 'Total Customers', value: stats?.totalCustomers || '0', icon: Users, change: '+23%', isPositive: true, progress: 78 },
-    { label: 'Total Collections', value: formatCurrency(stats?.monthlyCollection || 10000000), icon: TrendingUp, change: '+15%', isPositive: true, progress: 85 },
+    { label: 'Total Collections', value: formatCurrency(stats?.monthlyCollection ), icon: TrendingUp, change: '+15%', isPositive: true, progress: 85 },
     { label: 'Active Schemes', value: stats?.totalSchemes || '0', icon: CreditCard, change: '+45', isPositive: true, progress: 64 },
     { label: 'Active Users', value: stats?.activeUsers || '0', icon: AlertCircle, change: '+5%', isPositive: true, progress: 90 },
   ];
@@ -380,52 +383,75 @@ export const DashboardScreen: React.FC = () => {
         </Card>
       </div>
 
-      {/* Recent Transactions Table Mock */}
-      <Card title="Recent Transactions" headerAction={<button className="text-primary text-sm font-semibold hover:underline">View All</button>}>
+      {/* Recent Transactions Table */}
+      <Card 
+        title="Recent Transactions" 
+        headerAction={
+          <button 
+            onClick={() => navigate(ROUTES.PAYMENTS)} 
+            className="text-primary text-sm font-semibold hover:underline"
+          >
+            View All
+          </button>
+        }
+      >
         <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="border-b border-white/5">
-                <th className="pb-4 text-slate-400 font-medium text-sm">Customer</th>
-                <th className="pb-4 text-slate-400 font-medium text-sm">Scheme</th>
-                <th className="pb-4 text-slate-400 font-medium text-sm">Amount</th>
-                <th className="pb-4 text-slate-400 font-medium text-sm">Status</th>
-                <th className="pb-4 text-slate-400 font-medium text-sm">Date</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-              {[
-                { name: 'Rajesh Kumar', scheme: 'Gold Monthly', amount: 5000, status: 'success', date: 'Oct 24, 2023' },
-                { name: 'Sneha Patil', scheme: 'Elite Gold', amount: 15000, status: 'success', date: 'Oct 23, 2023' },
-                { name: 'Amit Sharma', scheme: 'Starter Plan', amount: 2000, status: 'failed', date: 'Oct 23, 2023' },
-                { name: 'Priya Singh', scheme: 'Gold Monthly', amount: 5000, status: 'success', date: 'Oct 22, 2023' },
-              ].map((row, i) => (
-                <tr key={i} className="group hover:bg-white/[0.02] transition-colors duration-200">
-                  <td className="py-4 font-medium text-text-light">
-                    <div className="flex items-center space-x-3">
-                      <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${avatarGradients[i % avatarGradients.length]} flex items-center justify-center text-xs font-bold text-slate-900 shadow-md`}>
-                        {getInitials(row.name)}
-                      </div>
-                      <span className="group-hover:text-primary transition-colors font-medium">{row.name}</span>
-                    </div>
-                  </td>
-                  <td className="py-4 text-slate-400">{row.scheme}</td>
-                  <td className="py-4 font-bold text-primary">{formatCurrency(row.amount)}</td>
-                  <td className="py-4">
-                    <span className={`inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                      row.status === 'success' ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'
-                    }`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${
-                        row.status === 'success' ? 'bg-success animate-pulse' : 'bg-danger'
-                      }`} />
-                      <span>{row.status}</span>
-                    </span>
-                  </td>
-                  <td className="py-4 text-slate-500 text-sm">{row.date}</td>
+          {recentTransactions.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-10 text-slate-500">
+              <p className="text-sm font-semibold text-slate-350">No recent transactions found</p>
+              <p className="text-xs text-slate-500 mt-1">Payments will appear here once processed.</p>
+            </div>
+          ) : (
+            <table className="w-full text-left">
+              <thead>
+                <tr className="border-b border-white/5">
+                  <th className="pb-4 text-slate-400 font-medium text-sm">Customer</th>
+                  <th className="pb-4 text-slate-400 font-medium text-sm">Scheme</th>
+                  <th className="pb-4 text-slate-400 font-medium text-sm">Amount</th>
+                  <th className="pb-4 text-slate-400 font-medium text-sm">Status</th>
+                  <th className="pb-4 text-slate-400 font-medium text-sm">Date</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {recentTransactions.map((row: any, i: number) => {
+                  const customerName = row.customerName || 'N/A';
+                  const schemeName = row.schemeName || 'N/A';
+                  const displayStatus = (row.status || row.paymentStatus || 'success').toLowerCase();
+                  const paymentDate = row.paymentDate || row.date || new Date();
+                  
+                  return (
+                    <tr key={row.id || i} className="group hover:bg-white/[0.02] transition-colors duration-200">
+                      <td className="py-4 font-medium text-text-light">
+                        <div className="flex items-center space-x-3">
+                          <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${avatarGradients[i % avatarGradients.length]} flex items-center justify-center text-xs font-bold text-slate-900 shadow-md`}>
+                            {getInitials(customerName)}
+                          </div>
+                          <span className="group-hover:text-primary transition-colors font-medium">{customerName}</span>
+                        </div>
+                      </td>
+                      <td className="py-4 text-slate-400">{schemeName}</td>
+                      <td className="py-4 font-bold text-primary">{formatCurrency(row.amount)}</td>
+                      <td className="py-4">
+                        <span className={`inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                          displayStatus === 'success' ? 'bg-success/10 text-success' : 
+                          displayStatus === 'failed' ? 'bg-danger/10 text-danger' : 
+                          'bg-accent/10 text-accent'
+                        }`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${
+                            displayStatus === 'success' ? 'bg-success animate-pulse' : 
+                            displayStatus === 'failed' ? 'bg-danger' : 
+                            'bg-accent animate-pulse'
+                          }`} />
+                          <span>{displayStatus}</span>
+                        </span>
+                      </td>
+                      <td className="py-4 text-slate-500 text-sm">{formatDate(paymentDate)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
         </div>
       </Card>
     </div>

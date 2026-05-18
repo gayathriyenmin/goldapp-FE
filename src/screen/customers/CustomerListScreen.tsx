@@ -53,29 +53,29 @@ export const CustomerListScreen: React.FC = () => {
         </span>
       ),
     }),
-    columnHelper.accessor('totalPaid', {
-      header: 'Total Paid',
-      cell: info => (
-        <span className="font-semibold text-primary">{formatCurrency(info.getValue())}</span>
-      ),
-    }),
-    columnHelper.display({
-      id: 'actions',
-      header: 'Actions',
-      cell: () => (
-        <div className="flex items-center space-x-2">
-          <button className="p-2 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors">
-            <Eye size={18} />
-          </button>
-          <button className="p-2 text-slate-400 hover:text-success hover:bg-success/10 rounded-lg transition-colors">
-            <Edit size={18} />
-          </button>
-          <button className="p-2 text-slate-400 hover:text-danger hover:bg-danger/10 rounded-lg transition-colors">
-            <Trash2 size={18} />
-          </button>
-        </div>
-      ),
-    }),
+    // columnHelper.accessor('totalPaid', {
+    //   header: 'Total Paid',
+    //   cell: info => (
+    //     <span className="font-semibold text-primary">{formatCurrency(info.getValue())}</span>
+    //   ),
+    // }),
+    // columnHelper.display({
+    //   id: 'actions',
+    //   header: 'Actions',
+    //   cell: () => (
+    //     <div className="flex items-center space-x-2">
+    //       <button className="p-2 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors">
+    //         <Eye size={18} />
+    //       </button>
+    //       <button className="p-2 text-slate-400 hover:text-success hover:bg-success/10 rounded-lg transition-colors">
+    //         <Edit size={18} />
+    //       </button>
+    //       <button className="p-2 text-slate-400 hover:text-danger hover:bg-danger/10 rounded-lg transition-colors">
+    //         <Trash2 size={18} />
+    //       </button>
+    //     </div>
+    //   ),
+    // }),
   ], []);
 
   const table = useReactTable({
