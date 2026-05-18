@@ -16,7 +16,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
         <div className="flex items-center space-x-4">
           <button 
             onClick={onMenuClick}
-            className="lg:hidden p-2 text-slate-400 hover:text-white transition-colors"
+            className="lg:hidden p-2 text-slate-400 hover:text-text-light transition-colors"
           >
             <Menu size={24} />
           </button>
@@ -32,7 +32,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
         </div>
 
         <div className="flex items-center space-x-4 lg:space-x-6">
-          <button className="relative p-2 text-slate-400 hover:text-white transition-colors bg-card border border-white/10 rounded-xl">
+          <button className="relative p-2 text-slate-400 hover:text-text-light hover:bg-menu-hover transition-colors bg-card border border-white/10 rounded-xl">
             <Bell size={20} />
             <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full border-2 border-card" />
           </button>
@@ -40,13 +40,13 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
           {/* Day/Night Theme Toggle Icon Button */}
           <button 
             onClick={toggleTheme}
-            className="p-2 text-slate-400 hover:text-white transition-colors bg-card border border-white/10 rounded-xl shadow-sm"
+            className="p-2 text-slate-400 hover:text-text-light hover:bg-menu-hover transition-colors bg-card border border-white/10 rounded-xl shadow-sm"
             title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
           >
             {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
           </button>
           
-          <div className="flex items-center space-x-3 bg-card border border-white/10 rounded-xl px-3 py-1.5 cursor-pointer hover:bg-slate-700 transition-colors">
+          <div className="flex items-center space-x-3 bg-card border border-white/10 rounded-xl px-3 py-1.5 cursor-pointer hover:bg-menu-hover transition-colors">
             <div className="w-8 h-8 rounded-lg gold-gradient flex items-center justify-center text-background font-bold text-xs">
               {user?.fullName?.charAt(0) || 'A'}
             </div>

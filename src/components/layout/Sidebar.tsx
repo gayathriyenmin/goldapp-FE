@@ -54,7 +54,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
               </div>
               <span className="text-xl font-bold text-primary tracking-tight">GoldSave</span>
             </div>
-            <button onClick={onClose} className="lg:hidden text-slate-400 hover:text-white">
+            <button onClick={onClose} className="lg:hidden text-slate-400 hover:text-text-light">
               <X size={24} />
             </button>
           </div>
@@ -70,7 +70,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                   flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200
                   ${isActive 
                     ? 'bg-primary/10 text-primary border border-primary/20 shadow-[0_0_20px_rgba(212,175,55,0.1)]' 
-                    : 'text-slate-400 hover:bg-white/5 hover:text-white'}
+                    : 'text-slate-400 hover:bg-menu-hover hover:text-text-light'}
                 `}
               >
                 <item.icon size={20} />

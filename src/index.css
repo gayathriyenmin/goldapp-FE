@@ -10,6 +10,8 @@
   --slate-400-dynamic: #94a3b8;
   --slate-500-dynamic: #64748b;
   --slate-600-dynamic: #475569;
+  
+  --menu-hover-dynamic: rgba(255, 255, 255, 0.05);
 }
 
 .light {
@@ -22,6 +24,8 @@
   --slate-400-dynamic: #1E293B; /* slate-800 */
   --slate-500-dynamic: #0F172A; /* slate-900 */
   --slate-600-dynamic: #94a3b8; /* slate-400 */
+  
+  --menu-hover-dynamic: rgba(212, 175, 55, 0.08); /* Warm premium gold overlay in Light Mode */
 }
 
 @theme {
@@ -33,6 +37,7 @@
   --color-success: #22C55E;
   --color-danger: #EF4444;
   --color-text-light: var(--color-text-light);
+  --color-menu-hover: var(--menu-hover-dynamic);
   
   --color-slate-300: var(--slate-300-dynamic);
   --color-slate-350: var(--slate-350-dynamic);
