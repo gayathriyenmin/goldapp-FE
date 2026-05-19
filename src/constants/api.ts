@@ -9,6 +9,7 @@ export const ENDPOINTS = {
   DASHBOARD: {
     STATS: '/admin/dashboard',
     REVENUE_VS_COLLECTION: '/admin/dashboard/revenue-vs-collection',
+    CUSTOMER_ACQUISITION: '/admin/dashboard/customer-acquisition',
   },
   CUSTOMERS: {
     LIST: '/admin/customers',

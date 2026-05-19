@@ -104,7 +104,7 @@ const CustomTooltip = ({ active, payload, label, unit }: any) => {
               />
               <span className="text-slate-350 text-xs font-semibold capitalize">
                 {entry.name}: <span className="text-text-light font-bold ml-1">
-                  {unit === 'rate' ? `₹${entry.value}/g` : unit === 'percent' ? `${entry.value}%` : formatCurrency(entry.value)}
+                  {unit === 'count' ? entry.value : unit === 'rate' ? `₹${entry.value}/g` : unit === 'percent' ? `${entry.value}%` : formatCurrency(entry.value)}
                 </span>
               </span>
             </div>
@@ -167,27 +167,45 @@ export const DashboardScreen: React.FC = () => {
   const { stats, goldRate, goldRateHistory, recentTransactions, isLoading } = useDashboardData();
   const [timeframe, setTimeframe] = useState<'Today' | 'Weekly' | 'Monthly'>('Monthly');
   const [revenueData, setRevenueData] = useState<any[]>(mockTimeframes['Monthly']);
+  const [acquisitionData, setAcquisitionData] = useState<any[]>(areaData);
 
   React.useEffect(() => {
-    const fetchRevenue = async () => {
+    const fetchChartsData = async () => {
       try {
-        const res = await dashboardService.getRevenueVsCollection(timeframe.toLowerCase());
-        const data = res.data?.data || res.data;
-        if (data && data.length > 0) {
-          const mappedData = data.map((item: any) => ({
+        const [revenueRes, acquisitionRes] = await Promise.all([
+          dashboardService.getRevenueVsCollection(timeframe.toLowerCase()),
+          dashboardService.getCustomerAcquisition(timeframe.toLowerCase()),
+        ]);
+
+        const rData = revenueRes.data?.data || revenueRes.data;
+        if (rData && rData.length > 0) {
+          const mappedRData = rData.map((item: any) => ({
             ...item,
             name: item.label || item.name,
           }));
-          setRevenueData(mappedData);
+          setRevenueData(mappedRData);
         } else {
           setRevenueData(mockTimeframes[timeframe]);
         }
+
+        const aData = acquisitionRes.data?.data || acquisitionRes.data;
+        if (aData && aData.length > 0) {
+          const mappedAData = aData.map((item: any) => ({
+            month: item.label || item.month,
+            amount: item.count || item.amount || 0,
+          }));
+          setAcquisitionData(mappedAData);
+        } else {
+          setAcquisitionData(areaData);
+        }
+
       } catch (err) {
-        console.error('Failed to fetch revenue data:', err);
+        console.error('Failed to fetch chart data:', err);
         setRevenueData(mockTimeframes[timeframe]);
+        setAcquisitionData(areaData);
       }
     };
-    fetchRevenue();
+    fetchChartsData();
   }, [timeframe]);
 
   const displayStats = [
@@ -331,7 +349,7 @@ export const DashboardScreen: React.FC = () => {
         <Card title="Growth Analytics" subtitle="Customer acquisition rate">
           <div className="h-[350px] w-full mt-4">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={areaData}>
+              <AreaChart data={acquisitionData}>
                 <defs>
                   <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#D4AF37" stopOpacity={0.3}/>
@@ -340,8 +358,8 @@ export const DashboardScreen: React.FC = () => {
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} opacity={0.3} />
                 <XAxis dataKey="month" stroke={axisColor} fontSize={12} />
-                <Tooltip content={<CustomTooltip />} />
-                <Area type="monotone" name="Acquisition" dataKey="amount" stroke="#D4AF37" fillOpacity={1} fill="url(#colorAmount)" strokeWidth={3} />
+                <Tooltip content={<CustomTooltip unit="count" />} />
+                <Area type="monotone" name="Acquisitions" dataKey="amount" stroke="#D4AF37" fillOpacity={1} fill="url(#colorAmount)" strokeWidth={3} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
