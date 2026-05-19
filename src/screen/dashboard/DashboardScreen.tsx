@@ -227,7 +227,7 @@ export const DashboardScreen: React.FC = () => {
                 <span className="text-slate-500 font-medium">Monthly Target</span>
                 <span className="text-primary font-bold">{stat.progress}%</span>
               </div>
-              <div className="h-1.5 w-full bg-slate-800/80 rounded-full overflow-hidden">
+              <div className={`h-1.5 w-full rounded-full overflow-hidden ${isLight ? 'bg-slate-200' : 'bg-slate-700'}`}>
                 <div 
                   className="h-full bg-gradient-to-r from-primary/60 to-primary rounded-full transition-all duration-500 group-hover:shadow-[0_0_8px_rgba(212,175,55,0.4)]" 
                   style={{ width: `${stat.progress}%` }}
@@ -258,7 +258,7 @@ export const DashboardScreen: React.FC = () => {
           title="Revenue vs Collections" 
           subtitle={`${timeframe} performance comparison`}
           headerAction={
-            <div className="flex items-center bg-slate-950/60 border border-white/10 p-0.5 rounded-xl">
+            <div className={`flex items-center p-0.5 rounded-xl border ${isLight ? 'bg-slate-100 border-slate-200' : 'bg-slate-950/60 border-white/10'}`}>
               {(['Today', 'Weekly', 'Monthly'] as const).map((t) => (
                 <button
                   key={t}
@@ -266,7 +266,7 @@ export const DashboardScreen: React.FC = () => {
                   className={`px-3 py-1 text-xs font-bold rounded-lg transition-all duration-200 ${
                     timeframe === t 
                       ? 'bg-primary text-slate-950 shadow-md shadow-primary/25 font-extrabold' 
-                      : 'text-slate-400 hover:text-white'
+                      : `text-slate-400 ${isLight ? 'hover:bg-slate-200 hover:text-slate-900' : 'hover:bg-white/5 hover:text-white'}`
                   }`}
                 >
                   {t}
