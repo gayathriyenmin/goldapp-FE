@@ -93,7 +93,7 @@ const CustomTooltip = ({ active, payload, label, unit }: any) => {
           border: `1px solid ${isLight ? 'rgba(15, 23, 42, 0.08)' : 'rgba(255, 255, 255, 0.1)'}`,
         }}
       >
-        {label && <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-2">{label}</p>}
+        {label && <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-2">{payload[0]?.payload?.fullDate || label}</p>}
         <div className="space-y-2">
           {payload.map((entry: any, index: number) => (
             <div key={index} className="flex items-center space-x-2.5">
@@ -163,7 +163,7 @@ export const DashboardScreen: React.FC = () => {
   const gridColor = isLight ? 'rgba(15, 23, 42, 0.08)' : '#334155';
   const tooltipCursorColor = isLight ? 'rgba(15, 23, 42, 0.03)' : 'rgba(255, 255, 255, 0.05)';
 
-  const { stats, goldRate, recentTransactions, isLoading } = useDashboardData();
+  const { stats, goldRate, goldRateHistory, recentTransactions, isLoading } = useDashboardData();
   const [timeframe, setTimeframe] = useState<'Today' | 'Weekly' | 'Monthly'>('Monthly');
 
   const displayStats = [
@@ -174,15 +174,17 @@ export const DashboardScreen: React.FC = () => {
   ];
 
   const currentGoldRate = goldRate?.gold_rate_per_gram || 7310;
-  const dynamicGoldRateData = [
-    { day: '12 May', rate: 7120 },
-    { day: '13 May', rate: 7180 },
-    { day: '14 May', rate: 7150 },
-    { day: '15 May', rate: 7220 },
-    { day: '16 May', rate: 7280 },
-    { day: '17 May', rate: 7240 },
-    { day: 'Today', rate: currentGoldRate },
-  ];
+  const chartGoldRateData = goldRateHistory && goldRateHistory.length > 0 
+    ? goldRateHistory 
+    : [
+        { day: '12 May', rate: 7120 },
+        { day: '13 May', rate: 7180 },
+        { day: '14 May', rate: 7150 },
+        { day: '15 May', rate: 7220 },
+        { day: '16 May', rate: 7280 },
+        { day: '17 May', rate: 7240 },
+        { day: 'Today', rate: currentGoldRate },
+      ];
 
   if (isLoading) {
     return <PremiumPageLoader isLoading={true} text="Synchronizing Ledger" />;
@@ -381,7 +383,7 @@ export const DashboardScreen: React.FC = () => {
         >
           <div className="h-[290px] w-full mt-4">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={dynamicGoldRateData}>
+              <LineChart data={chartGoldRateData}>
                 <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} opacity={0.3} />
                 <XAxis dataKey="day" stroke={axisColor} fontSize={11} />
                 <YAxis stroke={axisColor} fontSize={11} domain={['dataMin - 50', 'dataMax + 50']} tickFormatter={(value) => `₹${value}`} />

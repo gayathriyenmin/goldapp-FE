@@ -17,7 +17,7 @@ export const AdminLayout: React.FC = () => {
       <div className="lg:pl-64 flex flex-col min-h-screen">
         <Navbar onMenuClick={() => setIsSidebarOpen(true)} />
         
-        <main className="flex-1 p-4 lg:p-8 max-w-7xl mx-auto w-full overflow-x-hidden">
+        <main className="flex-1 p-4 lg:p-8 max-w-full w-full overflow-x-hidden">
           <AnimatePresence mode="wait">
             <motion.div
               key={window.location.pathname}
