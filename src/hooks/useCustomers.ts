@@ -24,6 +24,7 @@ export const useCustomers = () => {
         totalPaid: 0,
         dueAmount: 0,
         schemes: [],
+        customerSchemes: user.customerSchemes || [],
       }));
       setCustomers(mappedCustomers);
     } catch (error: any) {
