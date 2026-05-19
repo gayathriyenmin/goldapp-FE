@@ -38,5 +38,6 @@ export const ENDPOINTS = {
   },
   GOLD_RATES: {
     TODAY: '/gold-rates/today',
+    HISTORY: '/gold-rates/history',
   },
 };

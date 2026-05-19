@@ -11,4 +11,8 @@ export const dashboardService = {
     const response = await axiosInstance.get<any>(ENDPOINTS.GOLD_RATES.TODAY);
     return response;
   },
+  getGoldRateHistory: async () => {
+    const response = await axiosInstance.get<any>(ENDPOINTS.GOLD_RATES.HISTORY);
+    return response;
+  },
 };
