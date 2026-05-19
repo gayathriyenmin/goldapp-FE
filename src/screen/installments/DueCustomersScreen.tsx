@@ -5,9 +5,65 @@ import { formatCurrency } from '../../helpers';
 import { useCustomers } from '../../hooks/useCustomers';
 import { PremiumPageLoader } from '../../components/common/PremiumPageLoader';
 import toast from 'react-hot-toast';
+import { 
+  LineChart, 
+  Line, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer 
+} from 'recharts';
+import { useThemeStore } from '../../store';
+
+const mockOverdueData = [
+  { month: 'Jan', overdue: 45000, collected: 25000 },
+  { month: 'Feb', overdue: 52000, collected: 30000 },
+  { month: 'Mar', overdue: 49000, collected: 38000 },
+  { month: 'Apr', overdue: 62000, collected: 42000 },
+  { month: 'May', overdue: 58000, collected: 50000 },
+  { month: 'Jun', overdue: 71000, collected: 55000 },
+  { month: 'Jul', overdue: 68000, collected: 62000 },
+];
+
+const CustomTooltip = ({ active, payload, label }: any) => {
+  const theme = useThemeStore(state => state.theme);
+  const isLight = theme === 'light';
+
+  if (active && payload && payload.length) {
+    return (
+      <div className={`p-3 rounded-xl border shadow-xl backdrop-blur-md transition-all duration-200 ${
+        isLight 
+          ? 'bg-white/95 border-slate-200 text-slate-900 shadow-slate-200/50' 
+          : 'bg-slate-900/95 border-white/10 text-white'
+      }`}>
+        <p className="font-extrabold text-[10px] tracking-wider uppercase opacity-80">{label}</p>
+        <div className="space-y-1.5 mt-2">
+          {payload.map((entry: any, index: number) => (
+            <div key={index} className="flex items-center justify-between space-x-6 text-xs font-semibold">
+              <span className="opacity-75 flex items-center space-x-1.5">
+                <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: entry.stroke || entry.color }} />
+                <span className={isLight ? 'text-slate-600' : 'text-slate-400'}>{entry.name}:</span>
+              </span>
+              <span className="font-extrabold" style={{ color: entry.stroke || entry.color }}>
+                {formatCurrency(entry.value)}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
 
 export const DueCustomersScreen: React.FC = () => {
   const { customers, isLoading } = useCustomers();
+  const theme = useThemeStore(state => state.theme);
+  const isLight = theme === 'light';
+  
+  const axisColor = isLight ? '#334155' : '#94a3b8'; // Bolder dark slate text in Light Mode
+  const gridColor = isLight ? 'rgba(15, 23, 42, 0.12)' : '#334155'; // More distinct grid lines
 
   // Create a realistic due schedule dynamically from actual database customers
   const dueCustomers = React.useMemo(() => {
@@ -50,10 +106,11 @@ export const DueCustomersScreen: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-text-light">Due Tracking</h1>
-          <p className="text-slate-400 mt-1">Monitor pending installments and send reminders</p>
+          <p className="text-slate-400 mt-1 text-sm">Monitor pending installments and send reminders</p>
         </div>
         <Button 
           variant="danger" 
@@ -68,28 +125,30 @@ export const DueCustomersScreen: React.FC = () => {
 
       {dueCustomers.length === 0 ? (
         <Card className="flex flex-col items-center justify-center py-16 text-slate-500">
-          <p className="text-lg font-semibold text-slate-300">No overdue accounts</p>
-          <p className="text-sm text-slate-500 mt-1">All customer gold saving installments are fully up to date!</p>
+          <p className="text-lg font-semibold text-slate-350">No overdue accounts</p>
+          <p className="text-sm text-slate-400 mt-1">All customer gold saving installments are fully up to date!</p>
         </Card>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {dueCustomers.map((customer) => (
             <Card key={customer.id} className="relative overflow-hidden group">
               <div className={`absolute top-0 left-0 w-1 h-full ${
-                customer.status === 'overdue' ? 'bg-danger' : 'bg-accent'
+                customer.status === 'overdue' ? 'bg-danger' : 'bg-primary'
               }`} />
               
               <div className="flex items-start justify-between">
                 <div className="flex items-center space-x-4">
                   <div className={`p-3 rounded-xl ${
-                    customer.status === 'overdue' ? 'bg-danger/10 text-danger' : 'bg-accent/10 text-accent'
+                    customer.status === 'overdue' 
+                      ? 'bg-danger/10 text-danger' 
+                      : isLight ? 'bg-primary/20 text-primary-dark' : 'bg-primary/10 text-primary'
                   }`}>
                     <AlertCircle size={24} />
                   </div>
                   <div>
                     <h3 className="text-xl font-bold text-text-light">{customer.name}</h3>
-                    <div className="flex items-center text-slate-500 text-sm mt-1">
-                      <Calendar size={14} className="mr-1" />
+                    <div className="flex items-center text-slate-400 text-sm mt-1 font-medium">
+                      <Calendar size={14} className="mr-1.5" />
                       <span>Due: {customer.dueDate}</span>
                       {customer.daysOverdue > 0 && (
                         <span className="ml-2 px-2 py-0.5 bg-danger/20 text-danger text-[10px] rounded-md font-bold">
@@ -100,9 +159,11 @@ export const DueCustomersScreen: React.FC = () => {
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-slate-500 text-xs uppercase font-bold tracking-wider">Due Amount</p>
+                  <p className="text-slate-400 text-xs uppercase font-bold tracking-wider">Due Amount</p>
                   <p className={`text-2xl font-black mt-1 ${
-                    customer.status === 'overdue' ? 'text-danger' : 'text-accent'
+                    customer.status === 'overdue' 
+                      ? 'text-danger' 
+                      : isLight ? 'text-primary-dark font-extrabold' : 'text-accent'
                   }`}>
                     {formatCurrency(customer.amount)}
                   </p>
@@ -138,10 +199,49 @@ export const DueCustomersScreen: React.FC = () => {
         </div>
       )}
 
-      <Card title="Overdue Statistics" subtitle="Monthly trend of pending collections">
-        <div className="h-64 flex flex-col items-center justify-center text-slate-400 border border-white/5 rounded-2xl bg-slate-950/20">
-          <p className="font-semibold text-slate-300">Overdue Analytics Chart</p>
-          <p className="text-xs text-slate-500 mt-1">Automatic alert notifications are running in active cron sync mode.</p>
+      {/* Premium Visual Overdue Statistics Chart */}
+      <Card title="Overdue Statistics" subtitle="Monthly trend of pending collections vs successful collections">
+        <div className="h-72 w-full mt-4">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={mockOverdueData} margin={{ top: 15, right: 15, left: -10, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} opacity={0.4} />
+              <XAxis 
+                dataKey="month" 
+                stroke={axisColor} 
+                fontSize={12} 
+                fontWeight="bold" 
+                tickLine={false} 
+                dy={10} 
+              />
+              <YAxis 
+                stroke={axisColor} 
+                fontSize={12} 
+                fontWeight="bold" 
+                tickLine={false} 
+                dx={-10}
+                tickFormatter={(value) => `₹${value >= 1000 ? `${value / 1000}k` : value}`} 
+              />
+              <Tooltip content={<CustomTooltip />} cursor={{ stroke: gridColor, strokeWidth: 1 }} />
+              <Line 
+                type="monotone" 
+                dataKey="overdue" 
+                name="Pending Dues" 
+                stroke={isLight ? '#DC2626' : '#EF4444'} 
+                strokeWidth={3.5}
+                dot={{ r: 4, strokeWidth: 2, fill: isLight ? '#FFFFFF' : '#0F172A' }}
+                activeDot={{ r: 7, strokeWidth: 0 }}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="collected" 
+                name="Collections" 
+                stroke={isLight ? '#16A34A' : '#22C55E'} 
+                strokeWidth={3.5}
+                dot={{ r: 4, strokeWidth: 2, fill: isLight ? '#FFFFFF' : '#0F172A' }}
+                activeDot={{ r: 7, strokeWidth: 0 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
         </div>
       </Card>
     </div>
