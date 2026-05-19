@@ -33,6 +33,7 @@ import { formatCurrency, formatDate } from '../../helpers';
 import { useDashboardData } from '../../hooks/useDashboardData';
 import { PremiumPageLoader } from '@/components/common/PremiumPageLoader';
 import { useThemeStore } from '../../store';
+import { dashboardService } from '../../store/services';
 
 const mockTimeframes = {
   Monthly: [
@@ -165,6 +166,29 @@ export const DashboardScreen: React.FC = () => {
 
   const { stats, goldRate, goldRateHistory, recentTransactions, isLoading } = useDashboardData();
   const [timeframe, setTimeframe] = useState<'Today' | 'Weekly' | 'Monthly'>('Monthly');
+  const [revenueData, setRevenueData] = useState<any[]>(mockTimeframes['Monthly']);
+
+  React.useEffect(() => {
+    const fetchRevenue = async () => {
+      try {
+        const res = await dashboardService.getRevenueVsCollection(timeframe.toLowerCase());
+        const data = res.data?.data || res.data;
+        if (data && data.length > 0) {
+          const mappedData = data.map((item: any) => ({
+            ...item,
+            name: item.label || item.name,
+          }));
+          setRevenueData(mappedData);
+        } else {
+          setRevenueData(mockTimeframes[timeframe]);
+        }
+      } catch (err) {
+        console.error('Failed to fetch revenue data:', err);
+        setRevenueData(mockTimeframes[timeframe]);
+      }
+    };
+    fetchRevenue();
+  }, [timeframe]);
 
   const displayStats = [
     { label: 'Total Customers', value: stats?.totalCustomers || '0', icon: Users, change: '+23%', isPositive: true, progress: 78 },
@@ -279,7 +303,7 @@ export const DashboardScreen: React.FC = () => {
         >
           <div className="h-[350px] w-full mt-4">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={mockTimeframes[timeframe]}>
+              <BarChart data={revenueData}>
                 <defs>
                   <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="#E2C974" />
