@@ -8,5 +8,6 @@ export interface Customer {
   status: 'active' | 'inactive';
   totalPaid: number;
   dueAmount: number;
-  schemes: string[]; // IDs of schemes
+  schemes: string[];
+  customerSchemes?: any[];
 }
