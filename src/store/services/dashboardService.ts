@@ -19,4 +19,8 @@ export const dashboardService = {
     const response = await axiosInstance.get<any>(`${ENDPOINTS.DASHBOARD.REVENUE_VS_COLLECTION}?timeframe=${timeframe}`);
     return response;
   },
+  getCustomerAcquisition: async (timeframe: string = 'monthly') => {
+    const response = await axiosInstance.get<any>(`${ENDPOINTS.DASHBOARD.CUSTOMER_ACQUISITION}?timeframe=${timeframe}`);
+    return response;
+  },
 };
