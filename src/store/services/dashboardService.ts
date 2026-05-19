@@ -15,4 +15,8 @@ export const dashboardService = {
     const response = await axiosInstance.get<any>(ENDPOINTS.GOLD_RATES.HISTORY);
     return response;
   },
+  getRevenueVsCollection: async (timeframe: string = 'monthly') => {
+    const response = await axiosInstance.get<any>(`${ENDPOINTS.DASHBOARD.REVENUE_VS_COLLECTION}?timeframe=${timeframe}`);
+    return response;
+  },
 };
