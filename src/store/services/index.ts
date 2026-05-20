@@ -4,3 +4,4 @@ export * from './schemeService';
 export * from './paymentService';
 export * from './bannerOfferService';
 export * from './dashboardService';
+export * from './notificationService';
