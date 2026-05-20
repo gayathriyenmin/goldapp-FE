@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Send, Image as ImageIcon, Trash2, Bell } from 'lucide-react';
 import { Card, Button, Input } from '../../components/common';
 import toast from 'react-hot-toast';
+import { notificationService } from '../../store/services';
 
 export const NotificationScreen: React.FC = () => {
   const [title, setTitle] = useState('');
@@ -30,16 +31,19 @@ export const NotificationScreen: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await notificationService.send({
+        title,
+        description,
+        imageUrl: imagePreview || undefined,
+      });
       toast.success('Notification sent successfully!');
       
       // Reset form
       setTitle('');
       setDescription('');
       setImagePreview(null);
-    } catch (error) {
-      toast.error('Failed to send notification');
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || 'Failed to send notification');
     } finally {
       setIsSubmitting(false);
     }
