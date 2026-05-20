@@ -138,7 +138,7 @@ export const NotificationScreen: React.FC = () => {
             {/* Phone Notch */}
             <div className="absolute top-0 inset-x-0 h-6 bg-slate-800 rounded-b-xl mx-auto w-40 z-10"></div>
             
-            <div className="flex-1 bg-slate-900/50 p-4 pt-12 overflow-y-auto">
+            <div className="flex-1 bg-background p-4 pt-12 overflow-y-auto">
               <div className="text-center mb-8">
                 <p className="text-slate-500 text-xs font-medium">12:00 PM</p>
               </div>
@@ -153,7 +153,7 @@ export const NotificationScreen: React.FC = () => {
                   <span className="text-[10px] text-slate-500 ml-auto">now</span>
                 </div>
                 
-                <h4 className="text-sm font-bold text-white mb-1">
+                <h4 className="text-sm font-bold text-text-light mb-1">
                   {title || 'Notification Title'}
                 </h4>
                 <p className="text-xs text-slate-300 leading-relaxed mb-3 line-clamp-3">
@@ -165,8 +165,8 @@ export const NotificationScreen: React.FC = () => {
                     <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
                   </div>
                 ) : (
-                  <div className="w-full h-32 rounded-xl bg-slate-800/50 flex items-center justify-center mt-2 border border-dashed border-white/10">
-                    <ImageIcon className="text-slate-600" size={24} />
+                  <div className="w-full h-32 rounded-xl bg-white/5 flex items-center justify-center mt-2 border border-dashed border-white/10">
+                    <ImageIcon className="text-slate-500" size={24} />
                   </div>
                 )}
               </div>
