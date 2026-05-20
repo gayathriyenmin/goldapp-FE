@@ -6,3 +6,4 @@ export * from './schemes/SchemeManagementScreen';
 export * from './payments/PaymentManagementScreen';
 export * from './installments/DueCustomersScreen';
 export * from './banners/BannerOffersScreen';
+export * from './notifications/NotificationScreen';

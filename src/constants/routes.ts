@@ -7,4 +7,5 @@ export const ROUTES = {
   PAYMENTS: '/payments',
   INSTALLMENTS: '/installments',
   BANNERS: '/banners',
+  NOTIFICATIONS: '/notifications',
 };
