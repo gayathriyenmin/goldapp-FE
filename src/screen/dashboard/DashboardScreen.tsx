@@ -168,13 +168,15 @@ export const DashboardScreen: React.FC = () => {
   const [timeframe, setTimeframe] = useState<'Today' | 'Weekly' | 'Monthly'>('Monthly');
   const [revenueData, setRevenueData] = useState<any[]>(mockTimeframes['Monthly']);
   const [acquisitionData, setAcquisitionData] = useState<any[]>(areaData);
+  const [schemeDistributionData, setSchemeDistributionData] = useState<any[]>(schemeData);
 
   React.useEffect(() => {
     const fetchChartsData = async () => {
       try {
-        const [revenueRes, acquisitionRes] = await Promise.all([
+        const [revenueRes, acquisitionRes, schemeRes] = await Promise.all([
           dashboardService.getRevenueVsCollection(timeframe.toLowerCase()),
           dashboardService.getCustomerAcquisition(timeframe.toLowerCase()),
+          dashboardService.getSchemeDistribution(),
         ]);
 
         const rData = revenueRes.data?.data || revenueRes.data;
@@ -199,10 +201,25 @@ export const DashboardScreen: React.FC = () => {
           setAcquisitionData(areaData);
         }
 
+        const sData = schemeRes.data?.data || schemeRes.data;
+        if (sData && sData.length > 0) {
+          const colors = ['#D4AF37', '#FACC15', '#E2C974', '#B8860B', '#F59E0B', '#FBBF24'];
+          const mappedSData = sData.map((item: any, idx: number) => ({
+            name: item.schemeName,
+            value: item.percentage,
+            count: item.count,
+            color: colors[idx % colors.length]
+          }));
+          setSchemeDistributionData(mappedSData);
+        } else {
+          setSchemeDistributionData(schemeData);
+        }
+
       } catch (err) {
         console.error('Failed to fetch chart data:', err);
         setRevenueData(mockTimeframes[timeframe]);
         setAcquisitionData(areaData);
+        setSchemeDistributionData(schemeData);
       }
     };
     fetchChartsData();
@@ -374,7 +391,7 @@ export const DashboardScreen: React.FC = () => {
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={schemeData}
+                  data={schemeDistributionData}
                   cx="50%"
                   cy="50%"
                   innerRadius={60}
@@ -382,7 +399,7 @@ export const DashboardScreen: React.FC = () => {
                   paddingAngle={5}
                   dataKey="value"
                 >
-                  {schemeData.map((entry, index) => (
+                  {schemeDistributionData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
@@ -391,7 +408,7 @@ export const DashboardScreen: React.FC = () => {
             </ResponsiveContainer>
           </div>
           <div className="flex flex-col justify-center space-y-2.5 mt-2">
-            {schemeData.map((item, idx) => (
+            {schemeDistributionData.map((item, idx) => (
               <div key={idx} className="flex items-center justify-between border-b border-white/5 pb-1.5 last:border-0 last:pb-0">
                 <div className="flex items-center space-x-2">
                   <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: item.color }} />

@@ -23,4 +23,8 @@ export const dashboardService = {
     const response = await axiosInstance.get<any>(`${ENDPOINTS.DASHBOARD.CUSTOMER_ACQUISITION}?timeframe=${timeframe}`);
     return response;
   },
+  getSchemeDistribution: async () => {
+    const response = await axiosInstance.get<any>(ENDPOINTS.DASHBOARD.SCHEME_DISTRIBUTION);
+    return response;
+  },
 };

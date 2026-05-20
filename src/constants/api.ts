@@ -10,6 +10,7 @@ export const ENDPOINTS = {
     STATS: '/admin/dashboard',
     REVENUE_VS_COLLECTION: '/admin/dashboard/revenue-vs-collection',
     CUSTOMER_ACQUISITION: '/admin/dashboard/customer-acquisition',
+    SCHEME_DISTRIBUTION: '/admin/dashboard/scheme-distribution',
   },
   CUSTOMERS: {
     LIST: '/admin/customers',
