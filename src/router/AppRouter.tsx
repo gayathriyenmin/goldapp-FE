@@ -9,7 +9,8 @@ import {
   SchemeManagementScreen, 
   PaymentManagementScreen,
   DueCustomersScreen,
-  BannerOffersScreen
+  BannerOffersScreen,
+  NotificationScreen
 } from '../screen';
 import { AdminLayout } from '../components/layout';
 import { ProtectedRoute } from './ProtectedRoute';
@@ -29,6 +30,7 @@ export const AppRouter: React.FC = () => {
             <Route path={ROUTES.PAYMENTS} element={<PaymentManagementScreen />} />
             <Route path={ROUTES.INSTALLMENTS} element={<DueCustomersScreen />} />
             <Route path={ROUTES.BANNERS} element={<BannerOffersScreen />} />
+            <Route path={ROUTES.NOTIFICATIONS} element={<NotificationScreen />} />
           </Route>
         </Route>
 

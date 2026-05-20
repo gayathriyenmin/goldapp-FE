@@ -8,7 +8,8 @@ import {
   CalendarClock, 
   Image as ImageIcon, 
   LogOut,
-  X
+  X,
+  Bell
 } from 'lucide-react';
 import { ROUTES } from '../../constants';
 import { useAuthStore } from '../../store';
@@ -25,6 +26,7 @@ const navItems = [
   { icon: CreditCard, label: 'Payments', path: ROUTES.PAYMENTS },
   { icon: CalendarClock, label: 'Installments', path: ROUTES.INSTALLMENTS },
   { icon: ImageIcon, label: 'Banners', path: ROUTES.BANNERS },
+  { icon: Bell, label: 'Notifications', path: ROUTES.NOTIFICATIONS },
 ];
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
