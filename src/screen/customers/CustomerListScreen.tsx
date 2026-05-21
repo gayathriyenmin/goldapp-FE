@@ -15,17 +15,18 @@ import type { Customer } from '../../interfaces';
 import { formatCurrency, formatDate } from '../../helpers';
 import { useCustomers } from '../../hooks/useCustomers';
 import { CheckCircle, Clock, XCircle, ArrowLeft, Sparkles } from 'lucide-react';
-
-
+import toast from 'react-hot-toast';
+import { customerService } from '../../store/services/customerService';
 const columnHelper = createColumnHelper<Customer>();
 
 export const CustomerListScreen: React.FC = () => {
-  const { customers, isLoading } = useCustomers();
+  const { customers, isLoading, refetch } = useCustomers();
   const [globalFilter, setGlobalFilter] = React.useState('');
   const [selectedCustomer, setSelectedCustomer] = React.useState<Customer | null>(null);
   const [selectedScheme, setSelectedScheme] = React.useState<any>(null);
   const [otp, setOtp] = React.useState<string[]>(['', '', '', '']);
   const [otpVerified, setOtpVerified] = React.useState(false);
+  const [isClaiming, setIsClaiming] = React.useState(false);
 
   const columns = useMemo(() => [
     columnHelper.accessor('name', {
@@ -254,7 +255,7 @@ export const CustomerListScreen: React.FC = () => {
                               )}
                             </div>
                             
-                            {isReadyToClaim && cs.status !== 'CLAIMED' ? (
+                            {isReadyToClaim && cs.maturityStatus !== 'CLAIMED' ? (
                               <button 
                                 className="flex items-center gap-1.5 text-xs font-bold text-background bg-primary hover:bg-primary-dark px-3 py-1.5 rounded-lg transition-colors shadow-md shadow-primary/20"
                                 onClick={(e) => {
@@ -265,6 +266,11 @@ export const CustomerListScreen: React.FC = () => {
                                 <Sparkles size={14} />
                                 Process Claim
                               </button>
+                            ) : cs.maturityStatus === 'CLAIMED' ? (
+                              <span className="flex items-center gap-1.5 text-xs font-bold text-success bg-success/10 border border-success/20 px-3 py-1.5 rounded-lg">
+                                <CheckCircle size={14} />
+                                Claimed
+                              </span>
                             ) : (
                               <span className="text-xs text-primary font-medium hover:underline flex items-center">
                                 View Details <ArrowLeft size={14} className="ml-1 rotate-180" />
@@ -342,7 +348,7 @@ export const CustomerListScreen: React.FC = () => {
                   const allPaidDetailed = selectedScheme.installments && selectedScheme.installments.length > 0 && selectedScheme.installments.every((inst: any) => inst.status === 'PAID');
                   const isDetailedReadyToClaim = selectedScheme.status === 'COMPLETED' || allPaidDetailed;
 
-                  if (isDetailedReadyToClaim && selectedScheme.status !== 'CLAIMED') {
+                  if (isDetailedReadyToClaim && selectedScheme.maturityStatus !== 'CLAIMED') {
                     return (
                       <div className="mt-6 p-5 border border-primary/20 bg-primary/5 rounded-xl shadow-inner">
                         <h4 className="font-bold text-primary mb-2 flex items-center gap-2">
@@ -381,41 +387,36 @@ export const CustomerListScreen: React.FC = () => {
                               ))}
                             </div>
                             <Button 
-                              onClick={() => {
-                                if (otp.join('').length === 4) setOtpVerified(true);
+                              onClick={async () => {
+                                try {
+                                  setIsClaiming(true);
+                                  await customerService.verifyRedemption(selectedScheme.id, otp.join(''));
+                                  toast.success('OTP Match! Scheme confirmed and marked as complete.');
+                                  setSelectedScheme({ ...selectedScheme, maturityStatus: 'CLAIMED' });
+                                  setOtpVerified(false);
+                                  setOtp(['', '', '', '']);
+                                  refetch(true); // Silent refresh to avoid UI jerk
+                                } catch (err: any) {
+                                  toast.error(err.response?.data?.message || 'Invalid OTP code.');
+                                } finally {
+                                  setIsClaiming(false);
+                                }
                               }} 
-                              disabled={otp.join('').length !== 4}
-                              className="w-full sm:w-auto"
+                              isLoading={isClaiming}
+                              disabled={otp.join('').length !== 4 || isClaiming}
+                              className="w-full sm:w-auto bg-gradient-to-r from-primary-dark to-primary text-background font-bold shadow-md"
                             >
-                              Verify OTP
+                              Verify OTP & Claim
                             </Button>
                           </div>
-                        ) : (
-                          <div className="flex flex-col space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            <div className="flex items-center space-x-2 text-success bg-success/10 p-3 rounded-lg border border-success/20">
-                              <CheckCircle size={20} />
-                              <span className="font-semibold text-sm">OTP Verified Successfully</span>
-                            </div>
-                            <Button 
-                              onClick={() => {
-                                // Mocking API call to claim
-                                setSelectedScheme({ ...selectedScheme, status: 'CLAIMED' });
-                                setOtpVerified(false);
-                                setOtp(['', '', '', '']);
-                              }} 
-                              className="w-full bg-gradient-to-r from-primary-dark to-primary text-background font-bold shadow-lg shadow-primary/20"
-                            >
-                              Confirm & Mark as Claimed
-                            </Button>
-                          </div>
-                        )}
+                        ) : null}
                       </div>
                     );
                   }
                   return null;
                 })()}
 
-                {selectedScheme.status === 'CLAIMED' && (
+                {selectedScheme.maturityStatus === 'CLAIMED' && (
                   <div className="mt-6 p-4 border border-success/20 bg-success/10 rounded-xl flex items-center gap-3">
                     <CheckCircle className="text-success" size={24} />
                     <div>
