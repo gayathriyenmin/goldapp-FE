@@ -15,6 +15,7 @@ export const ENDPOINTS = {
   CUSTOMERS: {
     LIST: '/admin/customers',
     PROFILE: '/customer-profiles',
+    VERIFY_REDEMPTION: (id: string | number) => `/admin/verify-redemption/${id}`,
   },
   SCHEMES: {
     LIST: '/schemes',

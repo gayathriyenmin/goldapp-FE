@@ -27,4 +27,9 @@ export const customerService = {
     const response = await axiosInstance.delete<ApiResponse<any>>(`${ENDPOINTS.CUSTOMERS.PROFILE}/${id}`);
     return response;
   },
+
+  verifyRedemption: async (id: string | number, otp: string) => {
+    const response = await axiosInstance.post<ApiResponse<any>>(ENDPOINTS.CUSTOMERS.VERIFY_REDEMPTION(id), { otp });
+    return response;
+  },
 };
