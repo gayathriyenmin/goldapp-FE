@@ -14,7 +14,7 @@ import { PremiumPageLoader } from '../../components/common/PremiumPageLoader';
 import type { Customer } from '../../interfaces';
 import { formatCurrency, formatDate } from '../../helpers';
 import { useCustomers } from '../../hooks/useCustomers';
-import { CheckCircle, Clock, XCircle, ArrowLeft } from 'lucide-react';
+import { CheckCircle, Clock, XCircle, ArrowLeft, Sparkles } from 'lucide-react';
 
 
 const columnHelper = createColumnHelper<Customer>();
@@ -24,6 +24,8 @@ export const CustomerListScreen: React.FC = () => {
   const [globalFilter, setGlobalFilter] = React.useState('');
   const [selectedCustomer, setSelectedCustomer] = React.useState<Customer | null>(null);
   const [selectedScheme, setSelectedScheme] = React.useState<any>(null);
+  const [otp, setOtp] = React.useState<string[]>(['', '', '', '']);
+  const [otpVerified, setOtpVerified] = React.useState(false);
 
   const columns = useMemo(() => [
     columnHelper.accessor('name', {
@@ -203,24 +205,75 @@ export const CustomerListScreen: React.FC = () => {
                 <h4 className="font-semibold text-slate-300 mb-3">Joined Schemes</h4>
                 {selectedCustomer.customerSchemes && selectedCustomer.customerSchemes.length > 0 ? (
                   <div className="space-y-3">
-                    {selectedCustomer.customerSchemes.map((cs: any) => (
-                      <div 
-                        key={cs.id}
-                        onClick={() => setSelectedScheme(cs)}
-                        className="p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-colors cursor-pointer flex justify-between items-center"
-                      >
-                        <div>
-                          <div className="font-semibold text-text-light">{cs.scheme?.name || 'Gold Scheme'}</div>
-                          <div className="text-xs text-slate-400 mt-1">Scheme Number: {cs.schemeNumber}</div>
-                        </div>
-                        <div className="text-right">
-                          <div className={`text-xs font-bold px-2 py-1 rounded-full inline-block ${cs.status === 'ACTIVE' ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'}`}>
-                            {cs.status}
+                    {selectedCustomer.customerSchemes.map((cs: any) => {
+                      const allPaid = cs.installments && cs.installments.length > 0 && cs.installments.every((inst: any) => inst.status === 'PAID');
+                      const isReadyToClaim = cs.status === 'COMPLETED' || allPaid;
+
+                      return (
+                        <div 
+                          key={cs.id}
+                          onClick={() => setSelectedScheme(cs)}
+                          className={`p-4 border rounded-xl hover:-translate-y-0.5 transition-all cursor-pointer flex flex-col gap-3 relative overflow-hidden ${
+                            isReadyToClaim && cs.status !== 'CLAIMED' 
+                              ? 'bg-gradient-to-r from-primary/5 to-transparent border-primary/20 hover:border-primary/40 shadow-sm shadow-primary/5' 
+                              : 'bg-white/5 border-white/10 hover:bg-white/10'
+                          }`}
+                        >
+                          {/* Ready to Claim Glow */}
+                          {isReadyToClaim && cs.status !== 'CLAIMED' && (
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+                          )}
+
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <div className="font-semibold text-text-light">{cs.scheme?.name || 'Gold Scheme'}</div>
+                              <div className="text-xs text-slate-400 mt-1">Scheme Number: {cs.schemeNumber}</div>
+                            </div>
+                            <div className="text-right">
+                              <div className={`text-xs font-bold px-2.5 py-1 rounded-full inline-flex items-center gap-1 ${
+                                cs.status === 'CLAIMED' ? 'bg-success/10 text-success border border-success/20' :
+                                cs.status === 'COMPLETED' ? 'bg-primary/10 text-primary border border-primary/20' :
+                                cs.status === 'ACTIVE' ? 'bg-success/10 text-success border border-success/10' : 
+                                'bg-danger/10 text-danger border border-danger/10'
+                              }`}>
+                                {cs.status === 'CLAIMED' && <CheckCircle size={12} />}
+                                {cs.status}
+                              </div>
+                            </div>
                           </div>
-                          <div className="text-xs text-slate-400 mt-1">Paid: {formatCurrency(cs.totalPaidAmount)}</div>
+
+                          <div className="flex items-center justify-between mt-2 pt-3 border-t border-white/5">
+                            <div className="flex flex-col gap-1">
+                              <div className="text-xs text-slate-400">
+                                Paid: <span className="font-semibold text-text-light">{formatCurrency(cs.totalPaidAmount)}</span>
+                              </div>
+                              {cs.installments && cs.installments.length > 0 && (
+                                <div className="text-[10px] text-slate-500 font-medium">
+                                  Progress: <span className="text-primary">{cs.installments.filter((i: any) => i.status === 'PAID').length} / {cs.installments.length} Months</span>
+                                </div>
+                              )}
+                            </div>
+                            
+                            {isReadyToClaim && cs.status !== 'CLAIMED' ? (
+                              <button 
+                                className="flex items-center gap-1.5 text-xs font-bold text-background bg-primary hover:bg-primary-dark px-3 py-1.5 rounded-lg transition-colors shadow-md shadow-primary/20"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedScheme(cs);
+                                }}
+                              >
+                                <Sparkles size={14} />
+                                Process Claim
+                              </button>
+                            ) : (
+                              <span className="text-xs text-primary font-medium hover:underline flex items-center">
+                                View Details <ArrowLeft size={14} className="ml-1 rotate-180" />
+                              </span>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="text-center p-6 text-slate-400">No schemes found for this customer.</div>
@@ -247,7 +300,7 @@ export const CustomerListScreen: React.FC = () => {
                 </div>
 
                 <h4 className="font-semibold text-slate-300 mb-3">Installment History</h4>
-                <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
+                <div className="space-y-3 max-h-40 overflow-y-auto pr-2">
                   {selectedScheme.installments?.sort((a: any, b: any) => a.installmentNumber - b.installmentNumber).map((inst: any) => (
                     <div key={inst.id} className="flex items-center justify-between p-3 bg-background border border-white/5 rounded-lg">
                       <div className="flex items-center space-x-3">
@@ -283,6 +336,94 @@ export const CustomerListScreen: React.FC = () => {
                     <div className="text-center py-4 text-slate-400 text-sm">No installments generated yet.</div>
                   )}
                 </div>
+
+                {/* Scheme Claim OTP Verification */}
+                {(() => {
+                  const allPaidDetailed = selectedScheme.installments && selectedScheme.installments.length > 0 && selectedScheme.installments.every((inst: any) => inst.status === 'PAID');
+                  const isDetailedReadyToClaim = selectedScheme.status === 'COMPLETED' || allPaidDetailed;
+
+                  if (isDetailedReadyToClaim && selectedScheme.status !== 'CLAIMED') {
+                    return (
+                      <div className="mt-6 p-5 border border-primary/20 bg-primary/5 rounded-xl shadow-inner">
+                        <h4 className="font-bold text-primary mb-2 flex items-center gap-2">
+                          <Sparkles size={18} />
+                          Scheme Maturity Claim
+                        </h4>
+                        <p className="text-xs text-slate-400 mb-4 leading-relaxed">
+                          Verify the 4-digit OTP shown on the customer's mobile app to proceed with the gold claim.
+                        </p>
+                        
+                        {!otpVerified ? (
+                          <div className="flex flex-col space-y-4">
+                            <div className="flex space-x-3">
+                              {[0, 1, 2, 3].map((index) => (
+                                <input
+                                  key={index}
+                                  id={`otp-${index}`}
+                                  type="text"
+                                  maxLength={1}
+                                  value={otp[index]}
+                                  onChange={(e) => {
+                                    const newOtp = [...otp];
+                                    newOtp[index] = e.target.value.replace(/[^0-9]/g, '');
+                                    setOtp(newOtp);
+                                    if (e.target.value && index < 3) {
+                                      document.getElementById(`otp-${index + 1}`)?.focus();
+                                    }
+                                  }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Backspace' && !otp[index] && index > 0) {
+                                      document.getElementById(`otp-${index - 1}`)?.focus();
+                                    }
+                                  }}
+                                  className="w-12 h-12 text-center text-xl font-bold bg-background border border-white/10 rounded-xl text-text-light focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                                />
+                              ))}
+                            </div>
+                            <Button 
+                              onClick={() => {
+                                if (otp.join('').length === 4) setOtpVerified(true);
+                              }} 
+                              disabled={otp.join('').length !== 4}
+                              className="w-full sm:w-auto"
+                            >
+                              Verify OTP
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <div className="flex items-center space-x-2 text-success bg-success/10 p-3 rounded-lg border border-success/20">
+                              <CheckCircle size={20} />
+                              <span className="font-semibold text-sm">OTP Verified Successfully</span>
+                            </div>
+                            <Button 
+                              onClick={() => {
+                                // Mocking API call to claim
+                                setSelectedScheme({ ...selectedScheme, status: 'CLAIMED' });
+                                setOtpVerified(false);
+                                setOtp(['', '', '', '']);
+                              }} 
+                              className="w-full bg-gradient-to-r from-primary-dark to-primary text-background font-bold shadow-lg shadow-primary/20"
+                            >
+                              Confirm & Mark as Claimed
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
+
+                {selectedScheme.status === 'CLAIMED' && (
+                  <div className="mt-6 p-4 border border-success/20 bg-success/10 rounded-xl flex items-center gap-3">
+                    <CheckCircle className="text-success" size={24} />
+                    <div>
+                      <h4 className="font-bold text-success">Scheme Claimed</h4>
+                      <p className="text-xs text-success/80 mt-0.5">The customer has successfully claimed this scheme.</p>
+                    </div>
+                  </div>
+                )}
               </>
             )}
           </div>
