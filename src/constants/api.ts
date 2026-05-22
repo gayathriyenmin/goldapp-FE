@@ -47,5 +47,7 @@ export const ENDPOINTS = {
   },
   NOTIFICATIONS: {
     SEND: '/notifications/send',
+    REMIND_SINGLE: (userId: string | number) => `/notifications/remind/${userId}`,
+    REMIND_OVERDUE: '/notifications/remind-overdue',
   }
 };
