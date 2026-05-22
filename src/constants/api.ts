@@ -32,6 +32,7 @@ export const ENDPOINTS = {
   INSTALLMENTS: {
     LIST: '/installments',
     DUE: '/installments/due',
+    OVERDUE_STATS: '/installments/overdue-stats',
   },
   PROMOTIONS: {
     LIST: '/admin/promotions',
