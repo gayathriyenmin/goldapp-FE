@@ -61,6 +61,8 @@ export const DueCustomersScreen: React.FC = () => {
   const [dueCustomers, setDueCustomers] = React.useState<any[]>([]);
   const [overdueStats, setOverdueStats] = React.useState<any[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [isNotifyingAll, setIsNotifyingAll] = React.useState(false);
+  const [notifyingUserId, setNotifyingUserId] = React.useState<number | null>(null);
   
   const theme = useThemeStore(state => state.theme);
   const isLight = theme === 'light';
@@ -86,6 +88,7 @@ export const DueCustomersScreen: React.FC = () => {
           
           return {
             id: inst.id, // Using installment id as unique key
+            userId: inst.customerScheme?.customer?.id,
             name: inst.customerScheme?.customer?.fullName || 'Unknown',
             phone: inst.customerScheme?.customer?.mobileNumber || '+91 0000000000',
             amount: Number(inst.amount),
@@ -106,12 +109,40 @@ export const DueCustomersScreen: React.FC = () => {
     fetchData();
   }, []);
 
-  const handleNotifyAll = () => {
-    toast.success('Successfully sent payment notifications to all overdue members!');
+  const handleNotifyAll = async () => {
+    try {
+      setIsNotifyingAll(true);
+      const { notificationService } = await import('../../store/services');
+      await notificationService.remindOverdue({
+        title: "Overdue Installment Reminder",
+        description: "Dear Customer, you have pending gold saving installments. Please pay at your earliest convenience."
+      });
+      toast.success('Successfully sent payment notifications to all overdue members!');
+    } catch (error) {
+      toast.error('Failed to send notifications to all overdue members');
+    } finally {
+      setIsNotifyingAll(false);
+    }
   };
 
-  const handleNotifySingle = (name: string) => {
-    toast.success(`Sent reminder notification to ${name}`);
+  const handleNotifySingle = async (userId: number, name: string) => {
+    if (!userId) {
+      toast.error('User ID not found');
+      return;
+    }
+    try {
+      setNotifyingUserId(userId);
+      const { notificationService } = await import('../../store/services');
+      await notificationService.remindSingle(userId, {
+        title: "Installment Due Reminder",
+        description: `Dear ${name}, your gold saving installment is currently pending. Please ensure payment to continue your scheme.`
+      });
+      toast.success(`Sent reminder notification to ${name}`);
+    } catch (error) {
+      toast.error(`Failed to send reminder notification to ${name}`);
+    } finally {
+      setNotifyingUserId(null);
+    }
   };
 
   if (isLoading) {
@@ -130,10 +161,10 @@ export const DueCustomersScreen: React.FC = () => {
           variant="danger" 
           className="flex items-center space-x-2 shadow-lg shadow-danger/20"
           onClick={handleNotifyAll}
-          disabled={dueCustomers.length === 0}
+          disabled={dueCustomers.length === 0 || isNotifyingAll}
         >
-          <BellRing size={20} />
-          <span>Notify All Overdue</span>
+          <BellRing size={20} className={isNotifyingAll ? "animate-pulse" : ""} />
+          <span>{isNotifyingAll ? "Notifying..." : "Notify All Overdue"}</span>
         </Button>
       </div>
 
@@ -203,9 +234,10 @@ export const DueCustomersScreen: React.FC = () => {
                 </Button>
                 <Button 
                   className="flex-1"
-                  onClick={() => handleNotifySingle(customer.name)}
+                  onClick={() => handleNotifySingle(customer.userId, customer.name)}
+                  disabled={notifyingUserId === customer.userId}
                 >
-                  <span>Remind</span>
+                  <span>{notifyingUserId === customer.userId ? "Sending..." : "Remind"}</span>
                 </Button>
               </div>
             </Card>
