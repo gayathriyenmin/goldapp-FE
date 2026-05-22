@@ -58,39 +58,53 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export const DueCustomersScreen: React.FC = () => {
-  const { customers, isLoading } = useCustomers();
+  const [dueCustomers, setDueCustomers] = React.useState<any[]>([]);
+  const [overdueStats, setOverdueStats] = React.useState<any[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
+  
   const theme = useThemeStore(state => state.theme);
   const isLight = theme === 'light';
   
   const axisColor = isLight ? '#334155' : '#94a3b8'; // Bolder dark slate text in Light Mode
   const gridColor = isLight ? 'rgba(15, 23, 42, 0.12)' : '#334155'; // More distinct grid lines
 
-  // Create a realistic due schedule dynamically from actual database customers
-  const dueCustomers = React.useMemo(() => {
-    return customers.map((c, index) => {
-      const amounts = [5000, 3000, 8000, 10000, 2000];
-      const selectedAmount = amounts[index % amounts.length];
-      
-      const status = index % 3 === 0 ? 'overdue' : 'due-soon';
-      const daysOverdue = status === 'overdue' ? (index % 4) * 5 + 3 : 0;
-      
-      // Calculate realistic due dates in the current month
-      const currentYear = new Date().getFullYear();
-      const currentMonth = String(new Date().getMonth() + 1).padStart(2, '0');
-      const dueDay = String((index * 5 % 20) + 5).padStart(2, '0');
-      const dueDate = `${currentYear}-${currentMonth}-${dueDay}`;
-
-      return {
-        id: c.id,
-        name: c.name,
-        phone: c.phone || '+91 98765 43210',
-        amount: selectedAmount,
-        dueDate,
-        daysOverdue,
-        status,
-      };
-    });
-  }, [customers]);
+  React.useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const { installmentService } = await import('../../store/services');
+        const [duesRes, statsRes] = await Promise.all([
+          installmentService.getDueInstallments(),
+          installmentService.getOverdueStats(),
+        ]);
+        
+        const mappedDues = duesRes.data.map((inst: any) => {
+          const dueDate = new Date(inst.dueDate);
+          const today = new Date();
+          const diffTime = today.getTime() - dueDate.getTime();
+          const diffDays = diffTime > 0 ? Math.ceil(diffTime / (1000 * 60 * 60 * 24)) : 0;
+          
+          return {
+            id: inst.id, // Using installment id as unique key
+            name: inst.customerScheme?.customer?.fullName || 'Unknown',
+            phone: inst.customerScheme?.customer?.mobileNumber || '+91 0000000000',
+            amount: Number(inst.amount),
+            dueDate: inst.dueDate.split('T')[0],
+            daysOverdue: diffDays,
+            status: diffDays > 0 ? 'overdue' : 'due-soon',
+          };
+        });
+        
+        setDueCustomers(mappedDues);
+        setOverdueStats(statsRes.data);
+      } catch (error) {
+        toast.error('Failed to fetch ledger dues');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   const handleNotifyAll = () => {
     toast.success('Successfully sent payment notifications to all overdue members!');
@@ -203,42 +217,40 @@ export const DueCustomersScreen: React.FC = () => {
       <Card title="Overdue Statistics" subtitle="Monthly trend of pending collections vs successful collections">
         <div className="h-72 w-full mt-4">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={mockOverdueData} margin={{ top: 15, right: 15, left: -10, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} opacity={0.4} />
+            <LineChart data={overdueStats.length > 0 ? overdueStats : mockOverdueData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={gridColor} />
               <XAxis 
                 dataKey="month" 
-                stroke={axisColor} 
-                fontSize={12} 
-                fontWeight="bold" 
-                tickLine={false} 
-                dy={10} 
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: axisColor, fontSize: 12, fontWeight: 600 }}
+                dy={10}
               />
               <YAxis 
-                stroke={axisColor} 
-                fontSize={12} 
-                fontWeight="bold" 
-                tickLine={false} 
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: axisColor, fontSize: 12, fontWeight: 600 }}
+                tickFormatter={(value) => `₹${value / 1000}k`}
                 dx={-10}
-                tickFormatter={(value) => `₹${value >= 1000 ? `${value / 1000}k` : value}`} 
               />
-              <Tooltip content={<CustomTooltip />} cursor={{ stroke: gridColor, strokeWidth: 1 }} />
+              <Tooltip content={<CustomTooltip />} />
               <Line 
                 type="monotone" 
                 dataKey="overdue" 
-                name="Pending Dues" 
-                stroke={isLight ? '#DC2626' : '#EF4444'} 
-                strokeWidth={3.5}
-                dot={{ r: 4, strokeWidth: 2, fill: isLight ? '#FFFFFF' : '#0F172A' }}
-                activeDot={{ r: 7, strokeWidth: 0 }}
+                name="Overdue" 
+                stroke="#ef4444" 
+                strokeWidth={4}
+                dot={{ r: 6, fill: '#ef4444', strokeWidth: 2, stroke: isLight ? '#ffffff' : '#0f172a' }}
+                activeDot={{ r: 8, strokeWidth: 0 }}
               />
               <Line 
                 type="monotone" 
                 dataKey="collected" 
-                name="Collections" 
-                stroke={isLight ? '#16A34A' : '#22C55E'} 
-                strokeWidth={3.5}
-                dot={{ r: 4, strokeWidth: 2, fill: isLight ? '#FFFFFF' : '#0F172A' }}
-                activeDot={{ r: 7, strokeWidth: 0 }}
+                name="Collected" 
+                stroke="#10b981" 
+                strokeWidth={4}
+                dot={{ r: 6, fill: '#10b981', strokeWidth: 2, stroke: isLight ? '#ffffff' : '#0f172a' }}
+                activeDot={{ r: 8, strokeWidth: 0 }}
               />
             </LineChart>
           </ResponsiveContainer>

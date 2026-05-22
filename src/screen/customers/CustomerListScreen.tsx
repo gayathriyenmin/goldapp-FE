@@ -294,7 +294,14 @@ export const CustomerListScreen: React.FC = () => {
                   <ArrowLeft size={16} className="mr-1" /> Back to Schemes
                 </button>
                 <div className="p-4 bg-white/5 border border-white/10 rounded-xl mb-4">
-                  <h4 className="font-semibold text-text-light">{selectedScheme.scheme?.name || 'Scheme Details'}</h4>
+                  <h4 className="font-semibold text-text-light flex items-center justify-between">
+                    <span>{selectedScheme.scheme?.name || 'Scheme Details'}</span>
+                    {selectedScheme.installments?.[0]?.amount && (
+                      <span className="text-xs px-2 py-1 bg-white/5 text-primary font-bold rounded-md border border-white/10">
+                        {formatCurrency(selectedScheme.installments[0].amount)} / mo
+                      </span>
+                    )}
+                  </h4>
                   <div className="flex justify-between mt-2 text-sm">
                     <span className="text-slate-400">Total Paid:</span>
                     <span className="text-success font-bold">{formatCurrency(selectedScheme.totalPaidAmount)}</span>
