@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Plus, Edit2, Trash2, CheckCircle, XCircle, TrendingUp, Calendar, ShieldCheck, Filter, Search, MessageSquare } from 'lucide-react';
+import { Plus, Edit2, Trash2, CheckCircle, XCircle, TrendingUp, Calendar, ShieldCheck, Filter, Search, MessageSquare, ChevronDown } from 'lucide-react';
 import { Card, Button, Modal, Input, Toggle, ConfirmModal } from '../../components/common';
 import { PremiumPageLoader } from '../../components/common/PremiumPageLoader';
-import type { Scheme } from '../../interfaces';
+import { SchemeType, type Scheme } from '../../interfaces';
 import { formatCurrency } from '../../helpers';
 import { useSchemes } from '../../hooks/useSchemes';
 import { useForm } from 'react-hook-form';
@@ -13,11 +13,25 @@ import toast from 'react-hot-toast';
 
 const schemeSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters'),
+  schemeType: z.nativeEnum(SchemeType),
   description: z.string().optional(),
-  monthlyAmount: z.coerce.number().min(1, 'Monthly amount must be at least 1'),
-  durationMonths: z.coerce.number().min(1, 'Duration must be at least 1 month'),
-  bonusAmount: z.coerce.number().optional(),
-  maturityAmount: z.coerce.number().optional(),
+  
+  // Amounts
+  monthlyAmount: z.coerce.number().optional(),
+  oneTimeAmount: z.coerce.number().optional(),
+  minAmount: z.coerce.number().optional(),
+  
+  // Duration
+  durationMonths: z.coerce.number().optional(),
+  lockPeriodMonths: z.coerce.number().optional(),
+  payableInstallments: z.coerce.number().optional(),
+  bonusInstallments: z.coerce.number().optional(),
+
+  // Features
+  autoGoldAllocation: z.boolean().optional(),
+  bonusEnabled: z.boolean().optional(),
+  bonusValue: z.coerce.number().optional(),
+  bonusTiers: z.string().optional(),
 });
 
 type SchemeFormValues = z.infer<typeof schemeSchema>;
@@ -32,42 +46,92 @@ export const SchemeManagementScreen: React.FC = () => {
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
   const [schemeToToggle, setSchemeToToggle] = useState<{id: string | number, currentStatus: boolean} | null>(null);
   const [statusReason, setStatusReason] = useState('');
+  const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
+  
+  const schemeTypeOptions = [
+    { value: 'gold_rate_monthly', label: 'Gold Rate Based Monthly Savings' },
+    { value: 'gold_lock', label: 'One-Time Gold Lock Scheme' },
+    { value: '11_plus_1_bonus', label: '11+1 Monthly Bonus Scheme' },
+  ];
+  
+  const [bonusTiers, setBonusTiers] = useState<{months: number, bonus: number}[]>([
+    { months: 6, bonus: 500 },
+    { months: 8, bonus: 750 },
+    { months: 10, bonus: 1000 },
+    { months: 12, bonus: 1500 },
+  ]);
 
-  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<SchemeFormValues>({
+  const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<SchemeFormValues>({
     resolver: zodResolver(schemeSchema),
   });
+
+  const selectedSchemeType = watch('schemeType') || SchemeType.GOLD_RATE_MONTHLY;
 
   const handleOpenModal = (scheme?: Scheme) => {
     if (scheme) {
       setEditingScheme(scheme);
       setValue('name', scheme.name);
+      setValue('schemeType', scheme.schemeType || SchemeType.GOLD_RATE_MONTHLY);
       setValue('description', scheme.description || '');
-      setValue('monthlyAmount', scheme.monthlyAmount);
-      setValue('durationMonths', scheme.durationMonths);
-      setValue('bonusAmount', scheme.bonusAmount || 0);
-      setValue('maturityAmount', scheme.maturityAmount || 0);
+      setValue('monthlyAmount', scheme.monthlyAmount || 0);
+      setValue('oneTimeAmount', scheme.oneTimeAmount || 0);
+      setValue('minAmount', scheme.minAmount || 0);
+      setValue('durationMonths', scheme.durationMonths || 12);
+      setValue('lockPeriodMonths', scheme.lockPeriodMonths || 6);
+      setValue('payableInstallments', scheme.payableInstallments || 11);
+      setValue('bonusInstallments', scheme.bonusInstallments || 1);
+      setValue('autoGoldAllocation', scheme.autoGoldAllocation || false);
+      setValue('bonusEnabled', scheme.bonusEnabled || false);
+      setValue('bonusValue', scheme.bonusValue || 0);
+
+      let loadedTiers = [
+        { months: 6, bonus: 500 },
+        { months: 8, bonus: 750 },
+        { months: 10, bonus: 1000 },
+        { months: 12, bonus: 1500 },
+      ];
+      if (scheme.bonusTiers) {
+        try {
+           loadedTiers = JSON.parse(scheme.bonusTiers);
+        } catch(e) {}
+      }
+      setBonusTiers(loadedTiers);
     } else {
       setEditingScheme(null);
       reset({
         name: '',
+        schemeType: SchemeType.GOLD_RATE_MONTHLY,
         description: '',
-        monthlyAmount: 0,
+        monthlyAmount: 1000,
+        oneTimeAmount: 50000,
+        minAmount: 500,
         durationMonths: 12,
-        bonusAmount: 0,
-        maturityAmount: 0,
+        lockPeriodMonths: 6,
+        payableInstallments: 11,
+        bonusInstallments: 1,
+        autoGoldAllocation: true,
+        bonusEnabled: false,
+        bonusValue: 500,
       });
+      setBonusTiers([
+        { months: 6, bonus: 500 },
+        { months: 8, bonus: 750 },
+        { months: 10, bonus: 1000 },
+        { months: 12, bonus: 1500 },
+      ]);
     }
     setIsModalOpen(true);
   };
 
   const onSubmit = async (data: SchemeFormValues) => {
     setIsSubmitting(true);
+    const payload = { ...data, bonusTiers: JSON.stringify(bonusTiers) };
     try {
       if (editingScheme) {
-        const response = await schemeService.update(editingScheme.id, data);
+        const response = await schemeService.update(editingScheme.id, payload);
         toast.success(response.message || 'Scheme updated successfully');
       } else {
-        const response = await schemeService.create(data);
+        const response = await schemeService.create(payload);
         toast.success(response.message || 'Scheme created successfully');
       }
       setIsModalOpen(false);
@@ -223,7 +287,14 @@ export const SchemeManagementScreen: React.FC = () => {
               </div>
             </div>
 
-            <h3 className="text-xl font-bold text-text-light mb-2">{scheme.name}</h3>
+            <div className="flex items-center space-x-2 mb-2">
+              <h3 className="text-xl font-bold text-text-light">{scheme.name}</h3>
+              <span className="px-2 py-0.5 bg-primary/20 text-primary text-[10px] rounded-md font-bold uppercase tracking-wider">
+                {scheme.schemeType === 'gold_rate_monthly' ? 'Gold Rate Monthly' : 
+                 scheme.schemeType === 'gold_lock' ? 'One-Time Lock' : 
+                 scheme.schemeType === '11_plus_1_bonus' ? '11+1 Bonus' : 'Unknown Type'}
+              </span>
+            </div>
             <p className="text-slate-400 text-sm mb-6 line-clamp-2">{scheme.description}</p>
 
             {scheme.statusReason && (
@@ -296,49 +367,193 @@ export const SchemeManagementScreen: React.FC = () => {
         title={editingScheme ? "Edit Gold Scheme" : "Create New Gold Scheme"}
       >
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <Input
-            label="Scheme Name"
-            placeholder="e.g. Gold Monthly Saver"
-            {...register('name')}
-            error={errors.name?.message}
-          />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Input
+                label="Scheme Name"
+                placeholder="e.g. Gold Monthly Saver"
+                {...register('name')}
+                error={errors.name?.message as string}
+              />
+            </div>
+            <div className="relative">
+              <label className="block text-sm font-medium text-slate-400 mb-1">Scheme Type</label>
+              
+              <div 
+                className="w-full bg-background border border-white/10 rounded-xl py-2.5 px-4 text-text-light cursor-pointer flex justify-between items-center hover:border-primary/50 transition-colors"
+                onClick={() => setIsTypeDropdownOpen(!isTypeDropdownOpen)}
+              >
+                <span className="text-sm">{schemeTypeOptions.find(o => o.value === selectedSchemeType)?.label}</span>
+                <ChevronDown size={18} className="text-slate-400" />
+              </div>
+              
+              {isTypeDropdownOpen && (
+                <>
+                  <div 
+                    className="fixed inset-0 z-40" 
+                    onClick={() => setIsTypeDropdownOpen(false)} 
+                  />
+                  <div className="absolute z-50 mt-2 w-full bg-card border border-white/10 rounded-xl shadow-xl overflow-hidden py-1">
+                    {schemeTypeOptions.map((option) => (
+                      <div
+                        key={option.value}
+                        className={`px-4 py-2.5 cursor-pointer transition-colors text-sm
+                          ${selectedSchemeType === option.value 
+                            ? 'bg-primary/10 text-primary font-medium' 
+                            : 'text-text-light hover:bg-white/5'
+                          }`}
+                        onClick={() => {
+                          setValue('schemeType', option.value as SchemeType);
+                          setIsTypeDropdownOpen(false);
+                        }}
+                      >
+                        {option.label}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+              {errors.schemeType && (
+                <p className="mt-1 text-xs text-danger">{errors.schemeType.message as string}</p>
+              )}
+            </div>
+          </div>
           <Input
             label="Description"
             placeholder="Brief details about the scheme"
             {...register('description')}
             error={errors.description?.message}
           />
-          <div className="grid grid-cols-2 gap-4">
-            <Input
-              label="Monthly Amount (₹)"
-              type="number"
-              placeholder="5000"
-              {...register('monthlyAmount')}
-              error={errors.monthlyAmount?.message}
-            />
-            <Input
-              label="Duration (Months)"
-              type="number"
-              placeholder="12"
-              {...register('durationMonths')}
-              error={errors.durationMonths?.message}
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <Input
-              label="Bonus Amount (Optional)"
-              type="number"
-              placeholder="1000"
-              {...register('bonusAmount')}
-              error={errors.bonusAmount?.message}
-            />
-            <Input
-              label="Maturity Amount (Optional)"
-              type="number"
-              placeholder="61000"
-              {...register('maturityAmount')}
-              error={errors.maturityAmount?.message}
-            />
+          {/* DYNAMIC FIELDS BASED ON SCHEME TYPE */}
+          <div className="p-4 rounded-xl border border-white/10 bg-white/5 space-y-4">
+            <h4 className="text-sm font-semibold text-primary uppercase tracking-wider mb-2">Scheme Configuration</h4>
+            
+            {selectedSchemeType === 'gold_rate_monthly' && (
+              <div className="grid grid-cols-2 gap-4">
+                <Input
+                  label="Monthly Amount (₹)"
+                  type="number"
+                  {...register('monthlyAmount')}
+                  error={errors.monthlyAmount?.message}
+                />
+                <Input
+                  label="Duration (Months)"
+                  type="number"
+                  {...register('durationMonths')}
+                  error={errors.durationMonths?.message}
+                />
+              </div>
+            )}
+
+            {selectedSchemeType === 'gold_lock' && (
+              <div className="grid grid-cols-2 gap-4">
+                <Input
+                  label="One-Time Amount (₹)"
+                  type="number"
+                  {...register('oneTimeAmount')}
+                  error={errors.oneTimeAmount?.message}
+                />
+                <Input
+                  label="Lock Period (Months)"
+                  type="number"
+                  {...register('lockPeriodMonths')}
+                  error={errors.lockPeriodMonths?.message}
+                />
+                <div className="col-span-2">
+                  <label className="flex items-center space-x-3 cursor-pointer">
+                    <input type="checkbox" {...register('bonusEnabled')} className="form-checkbox text-primary bg-card border-white/20 rounded" />
+                    <span className="text-sm font-medium text-slate-300">Enable Maturity Bonus Tiers</span>
+                  </label>
+                  {watch('bonusEnabled') && (
+                    <div className="mt-4 p-4 border border-white/10 rounded-xl bg-white/5 space-y-3">
+                      <h5 className="text-sm font-semibold text-slate-300 mb-2">Define Bonus by Lock Period</h5>
+                      {bonusTiers.map((tier, index) => (
+                        <div key={index} className="flex items-center space-x-4">
+                          <div className="flex-1">
+                            <label className="block text-xs font-medium text-slate-400 mb-1">Lock Period</label>
+                            <div className="relative">
+                              <input 
+                                type="number" 
+                                value={tier.months}
+                                onChange={(e) => {
+                                  const newTiers = [...bonusTiers];
+                                  newTiers[index].months = Number(e.target.value);
+                                  setBonusTiers(newTiers);
+                                }}
+                                className="w-full bg-background border border-white/10 rounded-lg py-1.5 px-3 text-text-light focus:outline-none focus:ring-1 focus:ring-primary/50"
+                              />
+                              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500">Months</span>
+                            </div>
+                          </div>
+                          <div className="flex-1">
+                            <label className="block text-xs font-medium text-slate-400 mb-1">Bonus Amount (₹)</label>
+                            <input 
+                              type="number" 
+                              value={tier.bonus}
+                              onChange={(e) => {
+                                const newTiers = [...bonusTiers];
+                                newTiers[index].bonus = Number(e.target.value);
+                                setBonusTiers(newTiers);
+                              }}
+                              className="w-full bg-background border border-white/10 rounded-lg py-1.5 px-3 text-text-light focus:outline-none focus:ring-1 focus:ring-primary/50"
+                            />
+                          </div>
+                          <div className="pt-5">
+                            <button 
+                              type="button" 
+                              onClick={() => {
+                                const newTiers = bonusTiers.filter((_, i) => i !== index);
+                                setBonusTiers(newTiers);
+                              }}
+                              className="p-1.5 text-danger hover:bg-danger/10 rounded-lg transition-colors"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                      <Button 
+                        type="button" 
+                        variant="secondary" 
+                        className="w-full mt-2 border border-white/5 border-dashed text-xs py-1.5"
+                        onClick={() => setBonusTiers([...bonusTiers, { months: 12, bonus: 0 }])}
+                      >
+                        <Plus size={14} className="mr-1" /> Add Tier
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {selectedSchemeType === '11_plus_1_bonus' && (
+              <div className="grid grid-cols-2 gap-4">
+                <Input
+                  label="Monthly Amount (₹)"
+                  type="number"
+                  {...register('monthlyAmount')}
+                  error={errors.monthlyAmount?.message}
+                />
+                <Input
+                  label="Total Duration (Months)"
+                  type="number"
+                  {...register('durationMonths')}
+                  error={errors.durationMonths?.message}
+                />
+                <Input
+                  label="Payable Installments"
+                  type="number"
+                  {...register('payableInstallments')}
+                  error={errors.payableInstallments?.message}
+                />
+                <Input
+                  label="Bonus Installments"
+                  type="number"
+                  {...register('bonusInstallments')}
+                  error={errors.bonusInstallments?.message}
+                />
+              </div>
+            )}
           </div>
           <div className="flex justify-end space-x-3 mt-8">
             <Button 
