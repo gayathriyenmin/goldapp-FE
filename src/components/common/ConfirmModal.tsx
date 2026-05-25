@@ -13,6 +13,7 @@ interface ConfirmModalProps {
   cancelText?: string;
   type?: 'danger' | 'warning' | 'info';
   isLoading?: boolean;
+  children?: React.ReactNode;
 }
 
 export const ConfirmModal: React.FC<ConfirmModalProps> = ({
@@ -25,6 +26,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   cancelText = 'Cancel',
   type = 'danger',
   isLoading = false,
+  children,
 }) => {
   const getColorClasses = () => {
     switch (type) {
@@ -43,6 +45,11 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
         <div>
           <p className="text-slate-400">{message}</p>
         </div>
+        {children && (
+          <div className="w-full text-left mt-4">
+            {children}
+          </div>
+        )}
         <div className="flex items-center space-x-3 w-full mt-6">
           <Button
             variant="outline"

@@ -23,8 +23,8 @@ export const schemeService = {
     return response;
   },
 
-  updateStatus: async (id: string | number, isActive: boolean) => {
-    const response = await axiosInstance.patch<ApiResponse<any>>(ENDPOINTS.SCHEMES.UPDATE_STATUS(id), { isActive });
+  updateStatus: async (id: string | number, isActive: boolean, statusReason?: string) => {
+    const response = await axiosInstance.patch<ApiResponse<any>>(ENDPOINTS.SCHEMES.UPDATE_STATUS(id), { isActive, statusReason });
     return response;
   },
 

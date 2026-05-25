@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Upload, Plus, Image as ImageIcon, Trash2, Edit, ExternalLink, Filter, Search, Calendar, CheckCircle, XCircle } from 'lucide-react';
+import { Upload, Plus, Image as ImageIcon, Trash2, Edit, ExternalLink, Filter, Search, Calendar, CheckCircle, XCircle, MessageSquare } from 'lucide-react';
 import { Card, Button, Modal, Input, Toggle, ConfirmModal } from '../../components/common';
 import { PremiumPageLoader } from '../../components/common/PremiumPageLoader';
 import { usePromotions } from '../../hooks/usePromotions';
@@ -29,6 +29,9 @@ export const BannerOffersScreen: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingPromotion, setEditingPromotion] = useState<Promotion | null>(null);
   const [promotionToDelete, setPromotionToDelete] = useState<number | null>(null);
+  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+  const [promotionToToggle, setPromotionToToggle] = useState<{id: number, currentStatus: boolean} | null>(null);
+  const [statusReason, setStatusReason] = useState('');
 
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<PromotionFormValues>({
     resolver: zodResolver(promotionSchema),
@@ -95,14 +98,28 @@ export const BannerOffersScreen: React.FC = () => {
     }
   };
 
-  const handleToggleStatus = async (id: number, currentStatus: boolean) => {
+  const handleToggleStatusClick = (id: number, currentStatus: boolean) => {
+    setPromotionToToggle({ id, currentStatus });
+    setStatusReason('');
+    setIsStatusModalOpen(true);
+  };
+
+  const handleConfirmToggleStatus = async () => {
+    if (!promotionToToggle) return;
+    const { id, currentStatus } = promotionToToggle;
+    setIsSubmitting(true);
     try {
-      updateLocal(id, { isActive: !currentStatus });
-      await bannerOfferService.updateStatus(id, !currentStatus);
+      const trimmedReason = statusReason.trim();
+      updateLocal(id, { isActive: !currentStatus, statusReason: trimmedReason });
+      await bannerOfferService.updateStatus(id, !currentStatus, trimmedReason);
       toast.success(`Promotion ${!currentStatus ? 'activated' : 'deactivated'}`);
+      setIsStatusModalOpen(false);
+      setPromotionToToggle(null);
     } catch (error: any) {
       updateLocal(id, { isActive: currentStatus });
       toast.error(error.message || 'Failed to update status');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -203,7 +220,7 @@ export const BannerOffersScreen: React.FC = () => {
               <div className="absolute top-4 right-4 flex flex-col items-end space-y-2">
                 <Toggle 
                   enabled={Boolean(promo.isActive)} 
-                  onChange={() => handleToggleStatus(promo.id, Boolean(promo.isActive))} 
+                  onChange={() => handleToggleStatusClick(promo.id, Boolean(promo.isActive))} 
                 />
                 <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center space-x-1 ${
                   Boolean(promo.isActive) ? 'bg-success text-white' : 'bg-slate-500 text-white'
@@ -236,6 +253,21 @@ export const BannerOffersScreen: React.FC = () => {
                   </div>
                 )}
               </div>
+
+              {promo.statusReason && (
+                <div className="mb-4 p-4 bg-gradient-to-r from-primary/10 to-transparent rounded-xl border-l-4 border-primary shadow-sm">
+                  <div className="flex items-start space-x-3">
+                    <MessageSquare size={18} className="text-primary mt-0.5" />
+                    <div>
+                      <span className="text-xs font-bold text-primary uppercase tracking-wider mb-1 block">
+                        {promo.isActive ? 'Activation Note' : 'Deactivation Reason'}
+                      </span>
+                      <p className="text-sm text-text-light font-medium italic">"{promo.statusReason}"</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="flex items-center space-x-3">
                 <Button 
                   variant="outline" 
@@ -380,6 +412,24 @@ export const BannerOffersScreen: React.FC = () => {
         confirmText="Yes, Delete"
         isLoading={isSubmitting}
       />
+
+      <ConfirmModal
+        isOpen={isStatusModalOpen}
+        onClose={() => setIsStatusModalOpen(false)}
+        onConfirm={handleConfirmToggleStatus}
+        title={promotionToToggle?.currentStatus ? "Deactivate Promotion" : "Activate Promotion"}
+        message={`Are you sure you want to ${promotionToToggle?.currentStatus ? 'deactivate' : 'activate'} this promotion?`}
+        confirmText={promotionToToggle?.currentStatus ? "Yes, Deactivate" : "Yes, Activate"}
+        isLoading={isSubmitting}
+      >
+        <textarea
+          placeholder={promotionToToggle?.currentStatus ? "Reason for deactivation (optional)..." : "Note for activation (optional)..."}
+          value={statusReason}
+          onChange={(e) => setStatusReason(e.target.value)}
+          className="w-full bg-white/5 border border-white/10 rounded-xl py-2 px-4 text-text-light focus:outline-none focus:ring-2 focus:ring-primary/50"
+          rows={3}
+        />
+      </ConfirmModal>
     </div>
   );
 };

@@ -18,8 +18,8 @@ export const bannerOfferService = {
     return response;
   },
 
-  updateStatus: async (id: string | number, isActive: boolean) => {
-    const response = await axiosInstance.put<ApiResponse<any>>(ENDPOINTS.PROMOTIONS.UPDATE_STATUS(id), { isActive });
+  updateStatus: async (id: string | number, isActive: boolean, statusReason?: string) => {
+    const response = await axiosInstance.put<ApiResponse<any>>(ENDPOINTS.PROMOTIONS.UPDATE_STATUS(id), { isActive, statusReason });
     return response;
   },
 

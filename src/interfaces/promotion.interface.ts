@@ -10,6 +10,7 @@ export interface Promotion {
   image: string;
   description: string;
   isActive: boolean;
+  statusReason?: string;
   expiryDate: string;
   createdAt: string;
   updatedAt: string;

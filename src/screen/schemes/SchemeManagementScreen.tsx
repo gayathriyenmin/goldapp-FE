@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Edit2, Trash2, CheckCircle, XCircle, TrendingUp, Calendar, ShieldCheck, Filter, Search } from 'lucide-react';
+import { Plus, Edit2, Trash2, CheckCircle, XCircle, TrendingUp, Calendar, ShieldCheck, Filter, Search, MessageSquare } from 'lucide-react';
 import { Card, Button, Modal, Input, Toggle, ConfirmModal } from '../../components/common';
 import { PremiumPageLoader } from '../../components/common/PremiumPageLoader';
 import type { Scheme } from '../../interfaces';
@@ -29,6 +29,9 @@ export const SchemeManagementScreen: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingScheme, setEditingScheme] = useState<Scheme | null>(null);
   const [schemeToDelete, setSchemeToDelete] = useState<string | number | null>(null);
+  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+  const [schemeToToggle, setSchemeToToggle] = useState<{id: string | number, currentStatus: boolean} | null>(null);
+  const [statusReason, setStatusReason] = useState('');
 
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<SchemeFormValues>({
     resolver: zodResolver(schemeSchema),
@@ -78,20 +81,33 @@ export const SchemeManagementScreen: React.FC = () => {
     }
   };
 
-  const handleToggleStatus = async (id: string | number, currentStatus: boolean) => {
+  const handleToggleStatusClick = (id: string | number, currentStatus: boolean) => {
+    setSchemeToToggle({ id, currentStatus });
+    setStatusReason('');
+    setIsStatusModalOpen(true);
+  };
+
+  const handleConfirmToggleStatus = async () => {
+    if (!schemeToToggle) return;
+    const { id, currentStatus } = schemeToToggle;
+    setIsSubmitting(true);
     try {
+      const trimmedReason = statusReason.trim();
       // Optimistic update: change status in UI immediately
-      updateSchemeLocal(id, { isActive: !currentStatus });
+      updateSchemeLocal(id, { isActive: !currentStatus, statusReason: trimmedReason });
       
-      await schemeService.updateStatus(id, !currentStatus);
+      await schemeService.updateStatus(id, !currentStatus, trimmedReason);
       toast.success(`Scheme ${!currentStatus ? 'activated' : 'deactivated'}`);
-      
+      setIsStatusModalOpen(false);
+      setSchemeToToggle(null);
       // We don't refetch here to prevent the backend's "Active-only" default 
       // from removing the card we just made inactive.
     } catch (error: any) {
       // Revert on error
       updateSchemeLocal(id, { isActive: currentStatus });
       toast.error(error.message || 'Failed to update status');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -192,7 +208,7 @@ export const SchemeManagementScreen: React.FC = () => {
               <div className="flex flex-col items-end space-y-2">
                 <Toggle 
                   enabled={Boolean(scheme.isActive)} 
-                  onChange={() => handleToggleStatus(scheme.id, Boolean(scheme.isActive))} 
+                  onChange={() => handleToggleStatusClick(scheme.id, Boolean(scheme.isActive))} 
                 />
                 <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center space-x-1 ${
                   Boolean(scheme.isActive) ? 'bg-success/10 text-success' : 'bg-slate-500/10 text-slate-500'
@@ -205,6 +221,20 @@ export const SchemeManagementScreen: React.FC = () => {
 
             <h3 className="text-xl font-bold text-text-light mb-2">{scheme.name}</h3>
             <p className="text-slate-400 text-sm mb-6 line-clamp-2">{scheme.description}</p>
+
+            {scheme.statusReason && (
+              <div className="mb-6 p-4 bg-gradient-to-r from-primary/10 to-transparent rounded-xl border-l-4 border-primary shadow-sm">
+                <div className="flex items-start space-x-3">
+                  <MessageSquare size={18} className="text-primary mt-0.5" />
+                  <div>
+                    <span className="text-xs font-bold text-primary uppercase tracking-wider mb-1 block">
+                      {scheme.isActive ? 'Activation Note' : 'Deactivation Reason'}
+                    </span>
+                    <p className="text-sm text-text-light font-medium italic">"{scheme.statusReason}"</p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="space-y-4 mb-8">
               <div className="flex items-center justify-between text-sm">
@@ -334,6 +364,24 @@ export const SchemeManagementScreen: React.FC = () => {
         confirmText="Delete Permanently"
         isLoading={isSubmitting}
       />
+
+      <ConfirmModal
+        isOpen={isStatusModalOpen}
+        onClose={() => setIsStatusModalOpen(false)}
+        onConfirm={handleConfirmToggleStatus}
+        title={schemeToToggle?.currentStatus ? "Deactivate Scheme" : "Activate Scheme"}
+        message={`Are you sure you want to ${schemeToToggle?.currentStatus ? 'deactivate' : 'activate'} this scheme?`}
+        confirmText={schemeToToggle?.currentStatus ? "Yes, Deactivate" : "Yes, Activate"}
+        isLoading={isSubmitting}
+      >
+        <textarea
+          placeholder={schemeToToggle?.currentStatus ? "Reason for deactivation (optional)..." : "Note for activation (optional)..."}
+          value={statusReason}
+          onChange={(e) => setStatusReason(e.target.value)}
+          className="w-full bg-white/5 border border-white/10 rounded-xl py-2 px-4 text-text-light focus:outline-none focus:ring-2 focus:ring-primary/50"
+          rows={3}
+        />
+      </ConfirmModal>
     </div>
   );
 };
