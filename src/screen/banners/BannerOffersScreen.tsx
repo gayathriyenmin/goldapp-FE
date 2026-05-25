@@ -106,10 +106,14 @@ export const BannerOffersScreen: React.FC = () => {
 
   const handleConfirmToggleStatus = async () => {
     if (!promotionToToggle) return;
+    const trimmedReason = statusReason.trim();
+    if (!trimmedReason) {
+      toast.error('Please provide a reason for the status change.');
+      return;
+    }
     const { id, currentStatus } = promotionToToggle;
     setIsSubmitting(true);
     try {
-      const trimmedReason = statusReason.trim();
       updateLocal(id, { isActive: !currentStatus, statusReason: trimmedReason });
       await bannerOfferService.updateStatus(id, !currentStatus, trimmedReason);
       toast.success(`Promotion ${!currentStatus ? 'activated' : 'deactivated'}`);
@@ -421,9 +425,10 @@ export const BannerOffersScreen: React.FC = () => {
         message={`Are you sure you want to ${promotionToToggle?.currentStatus ? 'deactivate' : 'activate'} this promotion?`}
         confirmText={promotionToToggle?.currentStatus ? "Yes, Deactivate" : "Yes, Activate"}
         isLoading={isSubmitting}
+        isConfirmDisabled={!statusReason.trim()}
       >
         <textarea
-          placeholder={promotionToToggle?.currentStatus ? "Reason for deactivation (optional)..." : "Note for activation (optional)..."}
+          placeholder={promotionToToggle?.currentStatus ? "Reason for deactivation (required)..." : "Note for activation (required)..."}
           value={statusReason}
           onChange={(e) => setStatusReason(e.target.value)}
           className="w-full bg-white/5 border border-white/10 rounded-xl py-2 px-4 text-text-light focus:outline-none focus:ring-2 focus:ring-primary/50"

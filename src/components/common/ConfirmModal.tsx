@@ -11,8 +11,8 @@ interface ConfirmModalProps {
   message: string;
   confirmText?: string;
   cancelText?: string;
-  type?: 'danger' | 'warning' | 'info';
   isLoading?: boolean;
+  isConfirmDisabled?: boolean;
   children?: React.ReactNode;
 }
 
@@ -26,6 +26,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   cancelText = 'Cancel',
   type = 'danger',
   isLoading = false,
+  isConfirmDisabled = false,
   children,
 }) => {
   const getColorClasses = () => {
@@ -64,6 +65,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
             className={`flex-1 ${type === 'danger' ? 'bg-danger hover:bg-danger/90' : ''}`}
             onClick={onConfirm}
             isLoading={isLoading}
+            disabled={isLoading || isConfirmDisabled}
           >
             {confirmText}
           </Button>
