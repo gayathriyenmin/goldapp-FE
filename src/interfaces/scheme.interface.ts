@@ -7,5 +7,6 @@ export interface Scheme {
   bonusAmount?: number;
   maturityAmount?: number;
   isActive: boolean;
+  statusReason?: string;
   createdAt: string;
 }
