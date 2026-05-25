@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertCircle, Calendar, MessageSquare, Phone, BellRing } from 'lucide-react';
+import { AlertCircle, Calendar, MessageSquare, Phone, BellRing, Search, Filter } from 'lucide-react';
 import { Card, Button } from '../../components/common';
 import { formatCurrency } from '../../helpers';
 import { useCustomers } from '../../hooks/useCustomers';
@@ -63,6 +63,9 @@ export const DueCustomersScreen: React.FC = () => {
   const [isLoading, setIsLoading] = React.useState(true);
   const [isNotifyingAll, setIsNotifyingAll] = React.useState(false);
   const [notifyingUserId, setNotifyingUserId] = React.useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = React.useState('');
+  const [schemeFilter, setSchemeFilter] = React.useState('all');
+  const [statusFilter, setStatusFilter] = React.useState('all');
   
   const theme = useThemeStore(state => state.theme);
   const isLight = theme === 'light';
@@ -95,6 +98,7 @@ export const DueCustomersScreen: React.FC = () => {
             dueDate: inst.dueDate.split('T')[0],
             daysOverdue: diffDays,
             status: diffDays > 0 ? 'overdue' : 'due-soon',
+            schemeName: inst.customerScheme?.scheme?.name || 'Unknown Scheme',
           };
         });
         
@@ -144,6 +148,18 @@ export const DueCustomersScreen: React.FC = () => {
       setNotifyingUserId(null);
     }
   };
+
+  const filteredCustomers = React.useMemo(() => {
+    return dueCustomers.filter(customer => {
+      const matchesSearch = customer.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                            customer.phone.includes(searchQuery);
+      const matchesScheme = schemeFilter === 'all' || customer.schemeName === schemeFilter;
+      const matchesStatus = statusFilter === 'all' || customer.status === statusFilter;
+      return matchesSearch && matchesScheme && matchesStatus;
+    });
+  }, [dueCustomers, searchQuery, schemeFilter, statusFilter]);
+
+  const uniqueSchemes = React.useMemo(() => Array.from(new Set(dueCustomers.map(c => c.schemeName))), [dueCustomers]);
 
   if (isLoading) {
     return <PremiumPageLoader isLoading={true} text="Synchronizing Ledger Dues" />;
@@ -212,81 +228,139 @@ export const DueCustomersScreen: React.FC = () => {
         </div>
       </Card>
 
-      {dueCustomers.length === 0 ? (
+      {/* Filter Section */}
+      <Card className="p-4 bg-card/50 backdrop-blur-md border-white/5">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+            <input
+              type="text"
+              placeholder="Search by name or phone..."
+              className="w-full bg-white/5 border border-white/10 rounded-xl py-2 pl-10 pr-4 text-text-light focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          
+          <div className="flex flex-col sm:flex-row items-center gap-3">
+            <div className="flex items-center bg-white/5 rounded-xl border border-white/10 overflow-hidden transition-all focus-within:ring-2 focus-within:ring-primary/50">
+              <div className="pl-3 pr-2 text-slate-500">
+                <Filter size={16} />
+              </div>
+              <select
+                value={schemeFilter}
+                onChange={(e) => setSchemeFilter(e.target.value)}
+                className="bg-transparent py-2.5 pr-4 text-sm text-text-light focus:outline-none w-40 cursor-pointer"
+              >
+                <option value="all" className="bg-slate-800">All Schemes</option>
+                {uniqueSchemes.map(scheme => (
+                  <option key={scheme as string} value={scheme as string} className="bg-slate-800">{scheme as string}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex items-center bg-white/5 rounded-xl border border-white/10 overflow-hidden transition-all focus-within:ring-2 focus-within:ring-primary/50">
+              <div className="pl-3 pr-2 text-slate-500">
+                <AlertCircle size={16} />
+              </div>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="bg-transparent py-2.5 pr-4 text-sm text-text-light focus:outline-none w-32 cursor-pointer"
+              >
+                <option value="all" className="bg-slate-800">All Status</option>
+                <option value="overdue" className="bg-slate-800">Overdue</option>
+                <option value="due-soon" className="bg-slate-800">Due Soon</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      {filteredCustomers.length === 0 ? (
         <Card className="flex flex-col items-center justify-center py-16 text-slate-500">
-          <p className="text-lg font-semibold text-slate-350">No overdue accounts</p>
-          <p className="text-sm text-slate-400 mt-1">All customer gold saving installments are fully up to date!</p>
+          <p className="text-lg font-semibold text-slate-350">No customers found</p>
+          <p className="text-sm text-slate-400 mt-1">Try adjusting your search or filters.</p>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {dueCustomers.map((customer) => (
-            <Card key={customer.id} className="relative overflow-hidden group">
-              <div className={`absolute top-0 left-0 w-1 h-full ${
-                customer.status === 'overdue' ? 'bg-danger' : 'bg-primary'
-              }`} />
-              
-              <div className="flex items-start justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className={`p-3 rounded-xl ${
-                    customer.status === 'overdue' 
-                      ? 'bg-danger/10 text-danger' 
-                      : isLight ? 'bg-primary/20 text-primary-dark' : 'bg-primary/10 text-primary'
-                  }`}>
-                    <AlertCircle size={24} />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-text-light">{customer.name}</h3>
-                    <div className="flex items-center text-slate-400 text-sm mt-1 font-medium">
-                      <Calendar size={14} className="mr-1.5" />
-                      <span>Due: {customer.dueDate}</span>
-                      {customer.daysOverdue > 0 && (
-                        <span className="ml-2 px-2 py-0.5 bg-danger/20 text-danger text-[10px] rounded-md font-bold">
-                          {customer.daysOverdue} DAYS OVERDUE
+        <Card className="p-0 overflow-hidden border border-white/5">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-white/10 bg-white/5 text-slate-400 text-xs uppercase tracking-wider font-bold">
+                  <th className="p-5 whitespace-nowrap">Customer</th>
+                  <th className="p-5 whitespace-nowrap">Scheme</th>
+                  <th className="p-5 whitespace-nowrap">Due Date</th>
+                  <th className="p-5 whitespace-nowrap">Amount</th>
+                  <th className="p-5 text-right whitespace-nowrap">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {filteredCustomers.map(customer => (
+                  <tr key={customer.id} className="hover:bg-white/[0.02] transition-colors group">
+                    <td className="p-5">
+                      <div className="flex items-center space-x-3">
+                        <div className={`w-2.5 h-2.5 rounded-full ${customer.status === 'overdue' ? 'bg-danger shadow-[0_0_8px_rgba(239,68,68,0.5)]' : 'bg-primary shadow-[0_0_8px_rgba(var(--primary),0.5)]'}`} />
+                        <div>
+                          <p className="font-bold text-text-light">{customer.name}</p>
+                          <p className="text-xs text-slate-400 font-medium">{customer.phone}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-5">
+                      <span className="text-sm font-semibold text-slate-300">{customer.schemeName}</span>
+                    </td>
+                    <td className="p-5">
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-text-light flex items-center">
+                          <Calendar size={13} className="mr-2 text-slate-500" />
+                          {customer.dueDate}
                         </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-slate-400 text-xs uppercase font-bold tracking-wider">Due Amount</p>
-                  <p className={`text-2xl font-black mt-1 ${
-                    customer.status === 'overdue' 
-                      ? 'text-danger' 
-                      : isLight ? 'text-primary-dark font-extrabold' : 'text-accent'
-                  }`}>
-                    {formatCurrency(customer.amount)}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-3 mt-8">
-                <Button 
-                  variant="secondary" 
-                  className="flex-1 space-x-2 border border-white/5"
-                  onClick={() => window.open(`tel:${customer.phone}`)}
-                >
-                  <Phone size={16} />
-                  <span>Call</span>
-                </Button>
-                <Button 
-                  variant="secondary" 
-                  className="flex-1 space-x-2 border border-white/5"
-                  onClick={() => window.open(`https://wa.me/${customer.phone.replace(/[^0-9]/g, '')}?text=Dear%20${encodeURIComponent(customer.name)},%20this%20is%20a%20gentle%20reminder%20to%20pay%20your%20monthly%20gold%20saving%20installment%20of%20${customer.amount}.`)}
-                >
-                  <MessageSquare size={16} />
-                  <span>WhatsApp</span>
-                </Button>
-                <Button 
-                  className="flex-1"
-                  onClick={() => handleNotifySingle(customer.userId, customer.name)}
-                  disabled={notifyingUserId === customer.userId}
-                >
-                  <span>{notifyingUserId === customer.userId ? "Sending..." : "Remind"}</span>
-                </Button>
-              </div>
-            </Card>
-          ))}
-        </div>
+                        {customer.daysOverdue > 0 && (
+                          <span className="text-[10px] text-danger font-bold mt-1 tracking-wider uppercase">
+                            {customer.daysOverdue} DAYS OVERDUE
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="p-5">
+                      <span className={`text-base font-black tracking-wide ${customer.status === 'overdue' ? 'text-danger' : 'text-accent'}`}>
+                        {formatCurrency(customer.amount)}
+                      </span>
+                    </td>
+                    <td className="p-5">
+                      <div className="flex items-center justify-end space-x-3 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+                        <Button 
+                          variant="secondary" 
+                          className="p-2.5 rounded-xl border border-white/10 hover:bg-white/10"
+                          onClick={() => window.open(`tel:${customer.phone}`)}
+                          title="Call Customer"
+                        >
+                          <Phone size={16} />
+                        </Button>
+                        <Button 
+                          variant="secondary" 
+                          className="p-2.5 rounded-xl border border-white/10 text-success hover:bg-success/20 hover:border-success/30"
+                          onClick={() => window.open(`https://wa.me/${customer.phone.replace(/[^0-9]/g, '')}?text=Dear%20${encodeURIComponent(customer.name)},%20this%20is%20a%20gentle%20reminder%20to%20pay%20your%20monthly%20gold%20saving%20installment%20of%20${customer.amount}.`)}
+                          title="Message on WhatsApp"
+                        >
+                          <MessageSquare size={16} />
+                        </Button>
+                        <Button 
+                          className="py-2 px-4 text-sm font-semibold rounded-xl bg-primary hover:bg-primary-dark shadow-lg shadow-primary/20"
+                          onClick={() => handleNotifySingle(customer.userId, customer.name)}
+                          disabled={notifyingUserId === customer.userId}
+                        >
+                          {notifyingUserId === customer.userId ? "..." : "Remind"}
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
       )}
     </div>
   );
