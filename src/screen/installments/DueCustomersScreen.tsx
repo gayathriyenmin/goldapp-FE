@@ -168,6 +168,50 @@ export const DueCustomersScreen: React.FC = () => {
         </Button>
       </div>
 
+      {/* Premium Visual Overdue Statistics Chart */}
+      <Card title="Overdue Statistics" subtitle="Monthly trend of pending collections vs successful collections">
+        <div className="h-72 w-full mt-4">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={overdueStats.length > 0 ? overdueStats : mockOverdueData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={gridColor} />
+              <XAxis 
+                dataKey="month" 
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: axisColor, fontSize: 12, fontWeight: 600 }}
+                dy={10}
+              />
+              <YAxis 
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: axisColor, fontSize: 12, fontWeight: 600 }}
+                tickFormatter={(value) => `₹${value / 1000}k`}
+                dx={-10}
+              />
+              <Tooltip content={<CustomTooltip />} />
+              <Line 
+                type="monotone" 
+                dataKey="overdue" 
+                name="Overdue" 
+                stroke="#ef4444" 
+                strokeWidth={4}
+                dot={{ r: 6, fill: '#ef4444', strokeWidth: 2, stroke: isLight ? '#ffffff' : '#0f172a' }}
+                activeDot={{ r: 8, strokeWidth: 0 }}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="collected" 
+                name="Collected" 
+                stroke="#10b981" 
+                strokeWidth={4}
+                dot={{ r: 6, fill: '#10b981', strokeWidth: 2, stroke: isLight ? '#ffffff' : '#0f172a' }}
+                activeDot={{ r: 8, strokeWidth: 0 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </Card>
+
       {dueCustomers.length === 0 ? (
         <Card className="flex flex-col items-center justify-center py-16 text-slate-500">
           <p className="text-lg font-semibold text-slate-350">No overdue accounts</p>
@@ -244,50 +288,6 @@ export const DueCustomersScreen: React.FC = () => {
           ))}
         </div>
       )}
-
-      {/* Premium Visual Overdue Statistics Chart */}
-      <Card title="Overdue Statistics" subtitle="Monthly trend of pending collections vs successful collections">
-        <div className="h-72 w-full mt-4">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={overdueStats.length > 0 ? overdueStats : mockOverdueData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={gridColor} />
-              <XAxis 
-                dataKey="month" 
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: axisColor, fontSize: 12, fontWeight: 600 }}
-                dy={10}
-              />
-              <YAxis 
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: axisColor, fontSize: 12, fontWeight: 600 }}
-                tickFormatter={(value) => `₹${value / 1000}k`}
-                dx={-10}
-              />
-              <Tooltip content={<CustomTooltip />} />
-              <Line 
-                type="monotone" 
-                dataKey="overdue" 
-                name="Overdue" 
-                stroke="#ef4444" 
-                strokeWidth={4}
-                dot={{ r: 6, fill: '#ef4444', strokeWidth: 2, stroke: isLight ? '#ffffff' : '#0f172a' }}
-                activeDot={{ r: 8, strokeWidth: 0 }}
-              />
-              <Line 
-                type="monotone" 
-                dataKey="collected" 
-                name="Collected" 
-                stroke="#10b981" 
-                strokeWidth={4}
-                dot={{ r: 6, fill: '#10b981', strokeWidth: 2, stroke: isLight ? '#ffffff' : '#0f172a' }}
-                activeDot={{ r: 8, strokeWidth: 0 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </Card>
     </div>
   );
 };
