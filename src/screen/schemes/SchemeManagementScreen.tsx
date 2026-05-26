@@ -322,10 +322,10 @@ export const SchemeManagementScreen: React.FC = () => {
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center text-slate-500">
                   <ShieldCheck size={16} className="mr-2" />
-                  <span>Monthly Investment</span>
+                  <span>{scheme.schemeType === 'gold_lock' ? 'One-Time Investment' : 'Monthly Investment'}</span>
                 </div>
                 <span className="text-text-light font-semibold">
-                  {formatCurrency(scheme.monthlyAmount)}
+                  {formatCurrency(scheme.schemeType === 'gold_lock' ? scheme.oneTimeAmount : scheme.monthlyAmount)}
                 </span>
               </div>
             </div>
