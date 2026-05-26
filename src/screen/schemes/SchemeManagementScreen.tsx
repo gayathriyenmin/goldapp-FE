@@ -264,7 +264,7 @@ export const SchemeManagementScreen: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {schemes.map((scheme) => (
-          <Card key={scheme.id} className="relative overflow-hidden group">
+          <Card key={scheme.id} className="relative overflow-hidden group h-full flex flex-col">
             <div className={`absolute top-0 right-0 w-32 h-32 -mr-8 -mt-8 rounded-full blur-3xl opacity-20 transition-all duration-500 group-hover:scale-150 ${
               Boolean(scheme.isActive) ? 'bg-success' : 'bg-slate-500'
             }`} />
@@ -311,41 +311,43 @@ export const SchemeManagementScreen: React.FC = () => {
               </div>
             )}
 
-            <div className="space-y-4 mb-8">
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center text-slate-500">
-                  <Calendar size={16} className="mr-2" />
-                  <span>Duration</span>
+            <div className="mt-auto">
+              <div className="space-y-4 mb-8">
+                <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center text-slate-500">
+                    <Calendar size={16} className="mr-2" />
+                    <span>Duration</span>
+                  </div>
+                  <span className="text-text-light font-semibold">{scheme.durationMonths} Months</span>
                 </div>
-                <span className="text-text-light font-semibold">{scheme.durationMonths} Months</span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center text-slate-500">
-                  <ShieldCheck size={16} className="mr-2" />
-                  <span>{scheme.schemeType === 'gold_lock' ? 'One-Time Investment' : 'Monthly Investment'}</span>
+                <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center text-slate-500">
+                    <ShieldCheck size={16} className="mr-2" />
+                    <span>{scheme.schemeType === 'gold_lock' ? 'One-Time Investment' : 'Monthly Investment'}</span>
+                  </div>
+                  <span className="text-text-light font-semibold">
+                    {formatCurrency(scheme.schemeType === 'gold_lock' ? scheme.oneTimeAmount : scheme.monthlyAmount)}
+                  </span>
                 </div>
-                <span className="text-text-light font-semibold">
-                  {formatCurrency(scheme.schemeType === 'gold_lock' ? scheme.oneTimeAmount : scheme.monthlyAmount)}
-                </span>
               </div>
-            </div>
 
-            <div className="flex items-center space-x-3">
-              <Button 
-                variant="outline" 
-                className="flex-1 py-2 text-sm"
-                onClick={() => handleOpenModal(scheme)}
-              >
-                <Edit2 size={16} className="mr-2" />
-                Edit
-              </Button>
-              <Button 
-                variant="secondary" 
-                className="p-2 hover:text-danger hover:bg-danger/10"
-                onClick={() => handleDeleteClick(scheme.id)}
-              >
-                <Trash2 size={18} />
-              </Button>
+              <div className="flex items-center space-x-3">
+                <Button 
+                  variant="outline" 
+                  className="flex-1 py-2 text-sm"
+                  onClick={() => handleOpenModal(scheme)}
+                >
+                  <Edit2 size={16} className="mr-2" />
+                  Edit
+                </Button>
+                <Button 
+                  variant="secondary" 
+                  className="p-2 hover:text-danger hover:bg-danger/10"
+                  onClick={() => handleDeleteClick(scheme.id)}
+                >
+                  <Trash2 size={18} />
+                </Button>
+              </div>
             </div>
           </Card>
         ))}
