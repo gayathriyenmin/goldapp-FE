@@ -227,7 +227,7 @@ export const DashboardScreen: React.FC = () => {
 
   const displayStats = [
     { label: 'Total Customers', value: stats?.totalCustomers || '0', icon: Users, change: '+23%', isPositive: true, progress: 78 },
-    { label: 'Total Collections', value: formatCurrency(stats?.monthlyCollection ), icon: TrendingUp, change: '+15%', isPositive: true, progress: 85 },
+    { label: 'Total Collections', value: formatCurrency(stats?.monthlyCollection ), icon: TrendingUp, change: '+15%', isPositive: true, progress: 55 },
     { label: 'Active Schemes', value: stats?.totalSchemes || '0', icon: CreditCard, change: '+45', isPositive: true, progress: 64 },
     { label: 'Active Users', value: stats?.activeUsers || '0', icon: AlertCircle, change: '+5%', isPositive: true, progress: 90 },
   ];
