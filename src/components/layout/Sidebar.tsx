@@ -9,7 +9,8 @@ import {
   Image as ImageIcon, 
   LogOut,
   X,
-  Bell
+  Bell,
+  ScanLine
 } from 'lucide-react';
 import { ROUTES } from '../../constants';
 import { useAuthStore } from '../../store';
@@ -27,6 +28,7 @@ const navItems = [
   { icon: CalendarClock, label: 'Installments', path: ROUTES.INSTALLMENTS },
   { icon: ImageIcon, label: 'Banners', path: ROUTES.BANNERS },
   { icon: Bell, label: 'Notifications', path: ROUTES.NOTIFICATIONS },
+  { icon: ScanLine, label: 'Redemption Desk', path: ROUTES.REDEMPTIONS },
 ];
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {

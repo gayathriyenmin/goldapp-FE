@@ -8,4 +8,5 @@ export const ROUTES = {
   INSTALLMENTS: '/installments',
   BANNERS: '/banners',
   NOTIFICATIONS: '/notifications',
+  REDEMPTIONS: '/redemptions',
 };

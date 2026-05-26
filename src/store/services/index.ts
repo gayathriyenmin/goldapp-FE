@@ -6,3 +6,4 @@ export * from './bannerOfferService';
 export * from './dashboardService';
 export * from './notificationService';
 export * from './installmentService';
+export * from './redemptionService';

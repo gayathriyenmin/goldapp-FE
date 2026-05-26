@@ -7,3 +7,4 @@ export * from './payments/PaymentManagementScreen';
 export * from './installments/DueCustomersScreen';
 export * from './banners/BannerOffersScreen';
 export * from './notifications/NotificationScreen';
+export * from './redemptions/RedemptionDeskScreen';
