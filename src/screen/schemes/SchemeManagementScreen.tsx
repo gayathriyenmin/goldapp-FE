@@ -13,8 +13,10 @@ import toast from 'react-hot-toast';
 
 const schemeSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters'),
+  nameTa: z.string().optional(),
   schemeType: z.nativeEnum(SchemeType),
   description: z.string().optional(),
+  descriptionTa: z.string().optional(),
   
   // Amounts
   monthlyAmount: z.coerce.number().optional(),
@@ -62,7 +64,7 @@ export const SchemeManagementScreen: React.FC = () => {
   ]);
 
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<SchemeFormValues>({
-    resolver: zodResolver(schemeSchema),
+    resolver: zodResolver(schemeSchema) as any,
   });
 
   const selectedSchemeType = watch('schemeType') || SchemeType.GOLD_RATE_MONTHLY;
@@ -71,8 +73,10 @@ export const SchemeManagementScreen: React.FC = () => {
     if (scheme) {
       setEditingScheme(scheme);
       setValue('name', scheme.name);
+      setValue('nameTa', scheme.nameTa || '');
       setValue('schemeType', scheme.schemeType || SchemeType.GOLD_RATE_MONTHLY);
       setValue('description', scheme.description || '');
+      setValue('descriptionTa', scheme.descriptionTa || '');
       setValue('monthlyAmount', scheme.monthlyAmount || 0);
       setValue('oneTimeAmount', scheme.oneTimeAmount || 0);
       setValue('minAmount', scheme.minAmount || 0);
@@ -100,8 +104,10 @@ export const SchemeManagementScreen: React.FC = () => {
       setEditingScheme(null);
       reset({
         name: '',
+        nameTa: '',
         schemeType: SchemeType.GOLD_RATE_MONTHLY,
         description: '',
+        descriptionTa: '',
         monthlyAmount: 1000,
         oneTimeAmount: 50000,
         minAmount: 500,
@@ -295,7 +301,13 @@ export const SchemeManagementScreen: React.FC = () => {
                  scheme.schemeType === '11_plus_1_bonus' ? '11+1 Bonus' : 'Unknown Type'}
               </span>
             </div>
-            <p className="text-slate-400 text-sm mb-6 line-clamp-2">{scheme.description}</p>
+            {scheme.nameTa && (
+              <h4 className="text-sm font-semibold text-slate-400 -mt-1 mb-2">{scheme.nameTa}</h4>
+            )}
+            <p className="text-slate-400 text-sm mb-2 line-clamp-2">{scheme.description}</p>
+            {scheme.descriptionTa && (
+              <p className="text-slate-500 text-xs mb-6 line-clamp-2 italic">{scheme.descriptionTa}</p>
+            )}
 
             {scheme.statusReason && (
               <div className="mb-6 p-4 bg-gradient-to-r from-primary/10 to-transparent rounded-xl border-l-4 border-primary shadow-sm">
@@ -326,7 +338,7 @@ export const SchemeManagementScreen: React.FC = () => {
                     <span>{scheme.schemeType === 'gold_lock' ? 'One-Time Investment' : 'Monthly Investment'}</span>
                   </div>
                   <span className="text-text-light font-semibold">
-                    {formatCurrency(scheme.schemeType === 'gold_lock' ? scheme.oneTimeAmount : scheme.monthlyAmount)}
+                    {formatCurrency(scheme.schemeType === 'gold_lock' ? (scheme.oneTimeAmount ?? 0) : (scheme.monthlyAmount ?? 0))}
                   </span>
                 </div>
               </div>
@@ -368,14 +380,22 @@ export const SchemeManagementScreen: React.FC = () => {
         onClose={() => setIsModalOpen(false)}
         title={editingScheme ? "Edit Gold Scheme" : "Create New Gold Scheme"}
       >
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit as any)} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Input
-                label="Scheme Name"
+                label="Scheme Name (English)"
                 placeholder="e.g. Gold Monthly Saver"
                 {...register('name')}
                 error={errors.name?.message as string}
+              />
+            </div>
+            <div>
+              <Input
+                label="Scheme Name (Tamil)"
+                placeholder="எ.கா. தங்க மாதாந்திர சேமிப்பு"
+                {...register('nameTa')}
+                error={errors.nameTa?.message as string}
               />
             </div>
             <div className="relative">
@@ -420,12 +440,24 @@ export const SchemeManagementScreen: React.FC = () => {
               )}
             </div>
           </div>
-          <Input
-            label="Description"
-            placeholder="Brief details about the scheme"
-            {...register('description')}
-            error={errors.description?.message}
-          />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Input
+                label="Description (English)"
+                placeholder="Brief details about the scheme in English"
+                {...register('description')}
+                error={errors.description?.message}
+              />
+            </div>
+            <div>
+              <Input
+                label="Description (Tamil)"
+                placeholder="திட்டத்தைப் பற்றிய சுருக்கமான விவரங்கள்"
+                {...register('descriptionTa')}
+                error={errors.descriptionTa?.message}
+              />
+            </div>
+          </div>
           {/* DYNAMIC FIELDS BASED ON SCHEME TYPE */}
           <div className="p-4 rounded-xl border border-white/10 bg-white/5 space-y-4">
             <h4 className="text-sm font-semibold text-primary uppercase tracking-wider mb-2">Scheme Configuration</h4>

@@ -6,9 +6,12 @@ import { notificationService } from '../../store/services';
 
 export const NotificationScreen: React.FC = () => {
   const [title, setTitle] = useState('');
+  const [titleTa, setTitleTa] = useState('');
   const [description, setDescription] = useState('');
+  const [descriptionTa, setDescriptionTa] = useState('');
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [previewLang, setPreviewLang] = useState<'en' | 'ta'>('en');
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -24,23 +27,31 @@ export const NotificationScreen: React.FC = () => {
 
   const handleSendNotification = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title || !description) {
-      toast.error('Please fill in both title and description');
+    
+    const finalTitle = title.trim() || titleTa.trim();
+    const finalDescription = description.trim() || descriptionTa.trim();
+
+    if (!finalTitle || !finalDescription) {
+      toast.error('Please enter a notification Title and Description');
       return;
     }
 
     setIsSubmitting(true);
     try {
       await notificationService.send({
-        title,
-        description,
+        title: finalTitle,
+        description: finalDescription,
+        titleTa: titleTa.trim() || undefined,
+        descriptionTa: descriptionTa.trim() || undefined,
         imageUrl: imagePreview || undefined,
       });
       toast.success('Notification sent successfully!');
       
       // Reset form
       setTitle('');
+      setTitleTa('');
       setDescription('');
+      setDescriptionTa('');
       setImagePreview(null);
     } catch (error: any) {
       toast.error(error?.response?.data?.message || 'Failed to send notification');
@@ -65,24 +76,42 @@ export const NotificationScreen: React.FC = () => {
         {/* Form Section */}
         <Card className="p-6 bg-card/50 backdrop-blur-md border-white/5">
           <form onSubmit={handleSendNotification} className="space-y-6">
-            <Input
-              label="Notification Title"
-              placeholder="e.g. Special Offer Today!"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              required
-            />
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-400">Description</label>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={4}
-                placeholder="Enter the notification message..."
-                className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-text-light focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all duration-200 resize-none"
-                required
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Input
+                label="Notification Title (English)"
+                placeholder="e.g. Special Offer Today!"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
               />
+              <Input
+                label="Notification Title (Tamil)"
+                placeholder="எ.கா. இன்றைய சிறப்பு சலுகை!"
+                value={titleTa}
+                onChange={(e) => setTitleTa(e.target.value)}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-400">Description (English)</label>
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  rows={4}
+                  placeholder="Enter the notification message in English..."
+                  className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-text-light focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all duration-200 resize-none h-32 text-sm"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-400">Description (Tamil)</label>
+                <textarea
+                  value={descriptionTa}
+                  onChange={(e) => setDescriptionTa(e.target.value)}
+                  rows={4}
+                  placeholder="அறிவிப்பு செய்தியை தமிழில் உள்ளிடவும்..."
+                  className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-text-light focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all duration-200 resize-none h-32 text-sm"
+                />
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -133,8 +162,34 @@ export const NotificationScreen: React.FC = () => {
         </Card>
 
         {/* Preview Section */}
-        <div className="flex justify-center items-start lg:pt-8">
-          <div className="w-full max-w-[320px] rounded-[2.5rem] border-[8px] border-slate-800 bg-background overflow-hidden relative shadow-2xl h-[600px] flex flex-col">
+        <div className="flex flex-col items-center justify-start lg:pt-8 space-y-4">
+          {/* Language Switcher for Preview */}
+          <div className="flex bg-white/5 border border-white/10 rounded-xl p-1 w-full max-w-[200px]">
+            <button
+              type="button"
+              onClick={() => setPreviewLang('en')}
+              className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                previewLang === 'en'
+                  ? 'bg-primary text-background shadow-lg'
+                  : 'text-slate-400 hover:text-text-light'
+              }`}
+            >
+              English
+            </button>
+            <button
+              type="button"
+              onClick={() => setPreviewLang('ta')}
+              className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                previewLang === 'ta'
+                  ? 'bg-primary text-background shadow-lg'
+                  : 'text-slate-400 hover:text-text-light'
+              }`}
+            >
+              Tamil
+            </button>
+          </div>
+
+          <div className="w-full max-w-[320px] rounded-[2.5rem] border-[8px] border-slate-800 bg-background overflow-hidden relative shadow-2xl h-[560px] flex flex-col">
             {/* Phone Notch */}
             <div className="absolute top-0 inset-x-0 h-6 bg-slate-800 rounded-b-xl mx-auto w-40 z-10"></div>
             
@@ -154,10 +209,14 @@ export const NotificationScreen: React.FC = () => {
                 </div>
                 
                 <h4 className="text-sm font-bold text-text-light mb-1">
-                  {title || 'Notification Title'}
+                  {previewLang === 'en' 
+                    ? (title || 'Notification Title') 
+                    : (titleTa || 'அறிவிப்பு தலைப்பு')}
                 </h4>
                 <p className="text-xs text-slate-300 leading-relaxed mb-3 line-clamp-3">
-                  {description || 'Your notification description will appear here. Start typing to see the preview.'}
+                  {previewLang === 'en' 
+                    ? (description || 'Your notification description will appear here. Start typing to see the preview.') 
+                    : (descriptionTa || 'உங்கள் அறிவிப்பு விளக்கம் இங்கே தோன்றும். முன்னோட்டத்தைக் காண தட்டச்சு செய்யத் தொடங்குங்கள்.')}
                 </p>
                 
                 {imagePreview ? (

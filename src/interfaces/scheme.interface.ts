@@ -7,9 +7,11 @@ export enum SchemeType {
 export interface Scheme {
   id: string | number;
   name: string;
+  nameTa?: string;
   schemeCode?: string;
   schemeType: SchemeType;
   description?: string;
+  descriptionTa?: string;
   termsAndConditions?: string;
   
   minAmount?: number;

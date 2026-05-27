@@ -15,8 +15,10 @@ import { formatDate } from '../../helpers';
 const promotionSchema = z.object({
   type: z.nativeEnum(PromotionType),
   title: z.string().min(3, 'Title must be at least 3 characters'),
+  titleTa: z.string().optional(),
   image: z.string().min(1, 'Image is required'),
   description: z.string().optional(),
+  descriptionTa: z.string().optional(),
   expiryDate: z.string().optional(),
 });
 
@@ -61,8 +63,10 @@ export const BannerOffersScreen: React.FC = () => {
       setEditingPromotion(promotion);
       setValue('type', promotion.type);
       setValue('title', promotion.title);
+      setValue('titleTa', promotion.titleTa || '');
       setValue('image', promotion.image);
       setValue('description', promotion.description || '');
+      setValue('descriptionTa', promotion.descriptionTa || '');
       setValue('expiryDate', promotion.expiryDate ? new Date(promotion.expiryDate).toISOString().slice(0, 16) : '');
       setImagePreview(promotion.image);
     } else {
@@ -70,8 +74,10 @@ export const BannerOffersScreen: React.FC = () => {
       reset({
         type: PromotionType.BANNER,
         title: '',
+        titleTa: '',
         image: '',
         description: '',
+        descriptionTa: '',
         expiryDate: '',
       });
       setImagePreview(null);
@@ -242,8 +248,14 @@ export const BannerOffersScreen: React.FC = () => {
             <div className="p-6">
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <h3 className="text-xl font-bold text-text-light mb-1">{promo.title}</h3>
+                  <h3 className="text-xl font-bold text-text-light mb-0.5">{promo.title}</h3>
+                  {promo.titleTa && (
+                    <h4 className="text-sm font-semibold text-slate-400 mb-1">{promo.titleTa}</h4>
+                  )}
                   <p className="text-slate-400 text-sm line-clamp-1">{promo.description}</p>
+                  {promo.descriptionTa && (
+                    <p className="text-slate-500 text-xs italic line-clamp-1 mt-0.5">{promo.descriptionTa}</p>
+                  )}
                 </div>
                 {promo.expiryDate && (
                   <div className="text-right">
@@ -332,12 +344,20 @@ export const BannerOffersScreen: React.FC = () => {
             />
           </div>
           
-          <Input
-            label="Promotion Title"
-            placeholder="e.g. Diwali Mega Sale"
-            {...register('title')}
-            error={errors.title?.message}
-          />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input
+              label="Promotion Title (English)"
+              placeholder="e.g. Diwali Mega Sale"
+              {...register('title')}
+              error={errors.title?.message}
+            />
+            <Input
+              label="Promotion Title (Tamil)"
+              placeholder="எ.கா. தீபாவளி மெகா விற்பனை"
+              {...register('titleTa')}
+              error={errors.titleTa?.message}
+            />
+          </div>
 
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-400">Promotion Image</label>
@@ -378,14 +398,25 @@ export const BannerOffersScreen: React.FC = () => {
             )}
           </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-400">Description</label>
-            <textarea
-              {...register('description')}
-              rows={3}
-              placeholder="Detailed description of the promotion..."
-              className="w-full bg-white/5 border border-white/10 rounded-xl py-2 px-4 text-text-light focus:outline-none focus:ring-2 focus:ring-primary/50"
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-400">Description (English)</label>
+              <textarea
+                {...register('description')}
+                rows={3}
+                placeholder="Detailed description of the promotion..."
+                className="w-full bg-white/5 border border-white/10 rounded-xl py-2 px-4 text-text-light focus:outline-none focus:ring-2 focus:ring-primary/50"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-400">Description (Tamil)</label>
+              <textarea
+                {...register('descriptionTa')}
+                rows={3}
+                placeholder="விளம்பரம் பற்றிய விரிவான விளக்கம்..."
+                className="w-full bg-white/5 border border-white/10 rounded-xl py-2 px-4 text-text-light focus:outline-none focus:ring-2 focus:ring-primary/50"
+              />
+            </div>
           </div>
 
           <div className="flex justify-end space-x-3 mt-8">
